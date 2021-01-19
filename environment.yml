@@ -4,3 +4,6 @@ dependencies:
   - numpy=1.19.*
   - pandas=1.2.*
   - pytorch=1.6.*
+  - pytest
+  - mypy
+  - jupyterlab
