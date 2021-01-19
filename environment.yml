@@ -3,9 +3,13 @@ dependencies:
   - python=3.8
   - numpy=1.19.*
   - pandas=1.2.*
-  - pytorch=1.6.*
   - pytest
   - mypy
   - jupyterlab
   - pandas-datareader
   - plotly
+  - seaborn
+  - matplotlib
+  - pip
+  - pip:
+    - torchvision
