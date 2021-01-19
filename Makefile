@@ -5,8 +5,7 @@ conda-update:
 	--conda update anaconda
 
 conda-create:
-	--conda create --name mlp_lstm python=3.8
-	--conda install -n mlp_lstm --file requirements.txt
+	--conda env create -f ./environment.yml
 	
 conda-freeze:
 	--conda list -e > requirements.txt
