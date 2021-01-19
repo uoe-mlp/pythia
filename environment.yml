@@ -7,3 +7,4 @@ dependencies:
   - pytest
   - mypy
   - jupyterlab
+  - pandas-datareader
