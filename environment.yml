@@ -8,3 +8,4 @@ dependencies:
   - mypy
   - jupyterlab
   - pandas-datareader
+  - plotly
