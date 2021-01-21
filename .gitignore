@@ -6,3 +6,5 @@
 .ipynb_checkpoints
 state_dict.pt
 .DS_Store
+tutorials/alessandro/data/test.ft.txt.bz2
+tutorials/alessandro/data/train.ft.txt.bz2
