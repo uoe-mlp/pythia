@@ -5,3 +5,4 @@
 .mypy_cache
 .ipynb_checkpoints
 state_dict.pt
+.DS_Store
