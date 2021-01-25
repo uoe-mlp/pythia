@@ -1,0 +1,28 @@
+{
+    "analysis": {
+        "type": "standard",
+        "params": {
+            "train": 0.7,
+            "val": 0.15,
+            "test": 0.15
+        }
+    },
+    "market": {
+        "type": "daily-historical",
+        "params": {
+            "features": ["random_features.csv"],
+            "target": ["random_target.csv", "random_features.csv"],
+            "trading_cost": {
+                "type": "linear",
+                "amount": 0.0001
+            }
+        }
+    },
+    "agent": {
+        "type": "supervised",
+        "params": {
+            "prediction": "linear",
+            "trading": "top-half"
+        }
+    }
+}
