@@ -1,5 +1,5 @@
-# MLP-CW2-2021
-Times series LSTM based deep learning model.
+# Pythia
+Times series LSTM based deep learning model. To know more about the Oracle of Delphi, follow the [white rabbit](https://en.wikipedia.org/wiki/Pythia).
 
 ## Main Classes
 - ```experiment``` is the configurations of everything. In theory, this should be reproducible and deterministic (maybe I need to add a seed in the json). You can find an example in test/experiment/data/simple_experiment.json
