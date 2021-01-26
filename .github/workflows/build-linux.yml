@@ -1,0 +1,27 @@
+name: Build Python
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python
+      uses: actions/setup-python@master
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        $CONDA/bin/conda env update --file environment.yml --name base
+    - name: Lint with mypy
+      run: |
+        $CONDA/bin/conda install mypy
+        # stop the build if there are Python syntax errors or undefined names
+        $CONDA/bin/mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --module pythia
+    - name: Test with pytest
+      run: |
+        $CONDA/bin/conda install pytest-cov
+        $CONDA/bin/pytest --cov=pythia test/
