@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, Optional, List
 from abc import ABC, abstractclassmethod
 from torch import Tensor
+from pandas import Timestamp
 
 from pythia.journal import TradeOrder
 from pythia.journal import TradeFill
@@ -26,9 +27,9 @@ class SupervisedAgent(Agent):
         prediction, conviction = self.predictor.predict(X)
         self.trader.fit(prediction=prediction, conviction=conviction, y=y)
 
-    def act(self, x: Tensor) -> List[TradeOrder]:
+    def act(self, x: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
         prediction, conviction = self.predictor.predict(x)
-        return self.trader.act(prediction, conviction)
+        return self.trader.act(prediction, conviction, timestamp, prices)
 
     def update_portfolio(self, fills: List[TradeFill]):
         self.trader.update_portfolio(fills)

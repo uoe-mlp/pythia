@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, List
 from abc import ABC, abstractclassmethod
 from torch import Tensor
+from pandas import Timestamp
 
 from pythia.journal import TradeOrder
 from pythia.journal import TradeFill
@@ -18,7 +19,7 @@ class Agent(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def act(self, x: Tensor) -> List[TradeOrder]:
+    def act(self, x: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
         raise NotImplementedError
 
     @abstractclassmethod
