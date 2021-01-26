@@ -22,6 +22,7 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         $CONDA/bin/mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --module pythia
     - name: Test with pytest
+      run: |
         $CONDA/bin/conda install pytest-cov
         $CONDA/bin/pytest --cov=./ --cov-report=xml
     - name: Upload coverage to Codecov
