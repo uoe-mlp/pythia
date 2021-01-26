@@ -1,13 +1,12 @@
 from __future__ import annotations
 from typing import Dict, List
 from abc import ABC, abstractclassmethod, abstractproperty
-from torch import Tensor
+from torch import Tensor, dot
 from pandas import Timestamp
 
 from pythia.journal import TradeOrder
 from pythia.journal import TradeFill
 
-from .position import Position
 
 class Trader(ABC):
 
@@ -16,11 +15,11 @@ class Trader(ABC):
         raise NotImplementedError
 
     @staticmethod
-    def initialise(params: Dict) -> Trader:
+    def initialise(output_size: int, params: Dict) -> Trader:
         raise NotImplementedError
 
     @abstractclassmethod
-    def fit(self, prediction: Tensor, conviction: Tensor, y: Tensor, **kwargs):
+    def fit(self, prediction: Tensor, conviction: Tensor, Y: Tensor, **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod
@@ -31,5 +30,5 @@ class Trader(ABC):
     def update_portfolio(self, fills: List[TradeFill]):
         raise NotImplementedError
 
-    def calculate_value(self, prices: Tensor, positions: List[Position]) -> float:
-        return sum([x.quantity * float(prices[x.instrument]) for x in positions])
+    def calculate_value(self, prices: Tensor, positions: Tensor) -> float:
+        return float(dot(prices, positions))

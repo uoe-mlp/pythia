@@ -7,7 +7,7 @@ from torch import Tensor
 class Predictor(ABC):
 
     @staticmethod
-    def initialise(params: Dict) -> Predictor:
+    def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         raise NotImplementedError
 
     @abstractclassmethod

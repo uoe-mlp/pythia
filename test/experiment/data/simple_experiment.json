@@ -10,19 +10,23 @@
     "market": {
         "type": "daily-historical",
         "params": {
-            "features": ["random_features.csv"],
-            "target": ["random_target.csv", "random_features.csv"],
-            "trading_cost": {
-                "type": "linear",
-                "amount": 0.0001
-            }
+            "features": ["random_target.csv", "random_features.csv"],
+            "target": "random_features.csv",
+            "trading_cost": 0.0001
         }
     },
     "agent": {
         "type": "supervised",
         "params": {
-            "prediction": "linear",
-            "trading": "top-half"
+            "predictor": {
+                "type": "linear",
+                "params": {
+                    "weight_penalty": 0.0
+                }
+            },
+            "trader": {
+                "type": "naive"
+            }
         }
     }
 }

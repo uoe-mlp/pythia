@@ -18,21 +18,17 @@ class LinearPredictor(Predictor):
         self.learning_rate: float = learning_rate
         self.weight_decay: float = weight_decay
         self.model: LinearRegression = LinearRegression(input_size, output_size)
-        self.optimizer: Optimizer = Adam(self.model.linear, lr=learning_rate, weight_decay=weight_decay)
+        self.optimizer: Optimizer = Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     @staticmethod
-    def initialise(params: Dict) -> Predictor:
+    def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         weight_decay: float = ArgsParser.get_or_default(params, 'weight_decay', 0.0)
         learning_rate: float = ArgsParser.get_or_default(params, 'learning_rate', 1e-3)
-        input_size: int = ArgsParser.get_or_error(params, 'input_size')
-        output_size: int = ArgsParser.get_or_error(params, 'output_size')
         return LinearPredictor(input_size=input_size, output_size=output_size, learning_rate=learning_rate, weight_decay=weight_decay)
 
-    @abstractclassmethod
     def fit(self, X: Tensor, y: Tensor, **kwargs):
         raise NotImplementedError
 
-    @abstractclassmethod
     def predict(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """[summary]
 

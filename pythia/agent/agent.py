@@ -11,11 +11,11 @@ from pythia.journal import TradeFill
 class Agent(ABC):
 
     @staticmethod
-    def initialise(params: Dict=None) -> Agent:
+    def initialise(input_size: int, output_size: int, params: Dict) -> Agent:
         raise NotImplementedError
 
     @abstractclassmethod
-    def fit(self, X: Tensor, y: Tensor, **kwargs):
+    def fit(self, X: Tensor, Y: Tensor, **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod

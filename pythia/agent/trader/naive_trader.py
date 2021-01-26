@@ -8,7 +8,6 @@ from pythia.journal import TradeOrderSell, TradeOrderBuy, TradeOrder
 from pythia.journal import TradeFill
 from pythia.utils import ArgsParser
 
-from .position import Position
 from .trader import Trader
 
 
@@ -22,11 +21,10 @@ class NaiveTrader(Trader):
         return self._portfolio
 
     @staticmethod
-    def initialise(params: Dict) -> Trader:
-        output_size: int = ArgsParser.get_or_error(params, 'output_size')
+    def initialise(output_size: int, params: Dict) -> Trader:
         return NaiveTrader(output_size)
 
-    def fit(self, prediction: Tensor, conviction: Tensor, y: Tensor, **kwargs):
+    def fit(self, prediction: Tensor, conviction: Tensor, Y: Tensor, **kwargs):
         pass
 
     def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:

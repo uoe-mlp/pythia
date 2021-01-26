@@ -3,6 +3,7 @@ import json
 from typing import Optional, Dict, cast
 
 from pythia.utils import ArgsParser
+from pythia.agent import Agent, SupervisedAgent
 
 from .analysis import Analysis
 from .analysis import StandardAnalysis
@@ -25,8 +26,9 @@ class ExperimentParser(object):
             self.loaded = True
 
         self._analysis: Optional[Analysis] = None
-        self._market: Optional[str] = None
-        self._agent: Optional[str] = None
+        self._market: Optional[str] = None                  # TODO: put Market object here
+        self._agent: Optional[Agent] = None
+        self._journal: Optional[str] = None                 # TODO: put Journal object here
         self.parse_args(**self.data)
         
     @property
@@ -44,7 +46,7 @@ class ExperimentParser(object):
             raise ValueError('Property market has not been set')
 
     @property
-    def agent(self) -> str:
+    def agent(self) -> Agent:
         if self._agent is not None:
             return self._agent
         else:
@@ -62,6 +64,14 @@ class ExperimentParser(object):
 
         # ---- MARKET -----
         # TODO: define market instrument
+        market_type = ArgsParser.get_or_default(market, 'type', 'daily-historical')
+        input_size = 10
+        output_size = 20
 
         # ---- AGENT -----
-        # TODO: define agent instrument 
+        agent_type = ArgsParser.get_or_default(agent, 'type', 'supervised')
+
+        if agent_type.lower() == 'supervised':
+            self._agent = SupervisedAgent.initialise(input_size, output_size, cast(Dict, ArgsParser.get_or_default(agent, 'params', {})))
+        else:
+            raise ValueError('Unexpected value for experiment_type: %s' % (experiment_type))
