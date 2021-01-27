@@ -4,6 +4,7 @@ from typing import Optional, Dict, cast
 
 from pythia.utils import ArgsParser
 from pythia.agent import Agent, SupervisedAgent
+from pythia.market import Market, DailyHistoricalMarket
 
 from .analysis import Analysis
 from .analysis import StandardAnalysis
@@ -26,7 +27,7 @@ class ExperimentParser(object):
             self.loaded = True
 
         self._analysis: Optional[Analysis] = None
-        self._market: Optional[str] = None                  # TODO: put Market object here
+        self._market: Optional[Market] = None
         self._agent: Optional[Agent] = None
         self._journal: Optional[str] = None                 # TODO: put Journal object here
         self.parse_args(**self.data)
@@ -39,7 +40,7 @@ class ExperimentParser(object):
             raise ValueError('Property analysis has not been set')
 
     @property
-    def market(self) -> str:
+    def market(self) -> Market:
         if self._market is not None:
             return self._market
         else:
@@ -65,6 +66,11 @@ class ExperimentParser(object):
         # ---- MARKET -----
         # TODO: define market instrument
         market_type = ArgsParser.get_or_default(market, 'type', 'daily-historical')
+
+        if market_type.lower() == 'daily-historical':
+            self._market = DailyHistoricalMarket.initialise(cast(Dict, ArgsParser.get_or_default(market, 'params', {})))
+        else:
+            raise ValueError('Unexpected value for experiment_type: %s' % (experiment_type))
         input_size = 10
         output_size = 20
 
