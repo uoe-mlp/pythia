@@ -1,6 +1,3 @@
-import os
-import pytest
-
 from pythia.market import DailyHistoricalMarket
 
 

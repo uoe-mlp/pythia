@@ -17,6 +17,7 @@ class NaiveTrader(Trader):
         self._output_size: int = output_size
         self._portfolio: Tensor = eye(output_size, 1) # Fully invested in cash initially (cash index must be 0)
 
+    @property
     def portfolio(self) -> Tensor:
         return self._portfolio
 
@@ -29,7 +30,7 @@ class NaiveTrader(Trader):
 
     def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
         target_trade = int(argmax(prediction))
-        trades: List[TradeOrder] = [TradeOrderSell(i, timestamp, x) for i, x in enumerate(self._portfolio)]
+        trades: List[TradeOrder] = [TradeOrderSell(i, timestamp, x) for i, x in enumerate(self._portfolio) if x != 0]
         trades.append(TradeOrderBuy(target_trade, timestamp, percentage=1))
         return trades
 

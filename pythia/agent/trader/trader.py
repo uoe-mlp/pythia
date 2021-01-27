@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Dict, List
-from abc import ABC, abstractclassmethod, abstractproperty
+from abc import ABC, abstractclassmethod, abstractproperty, abstractstaticmethod
 from torch import Tensor, dot
 from pandas import Timestamp
 
@@ -15,6 +15,7 @@ class Trader(ABC):
         raise NotImplementedError
 
     @staticmethod
+    @abstractstaticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
         raise NotImplementedError
 

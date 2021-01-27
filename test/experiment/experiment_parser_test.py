@@ -1,6 +1,5 @@
 import os
 from pythia.experiment.experiment import Experiment
-import pytest
 
 from pythia.experiment import ExperimentParser
 
