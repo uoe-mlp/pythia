@@ -22,4 +22,4 @@ jobs:
         $CONDA/bin/mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --module pythia
     - name: Test with pytest
       run: |
-        $CONDA/bin/pytest --cov=pythia test/
+        $CONDA/bin/coverage run -m pytest --cov=pythia test/
