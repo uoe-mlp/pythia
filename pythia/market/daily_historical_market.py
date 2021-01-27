@@ -21,6 +21,8 @@ class DailyHistoricalMarket(Market):
         self.trading_cost: float = trading_cost
         self.features_paths: List[str] = features_paths
         self.target_path: str = target_path
+        self.input_size = self.X.shape[1]
+        self.output_size = self.Y.shape[1]
 
     @staticmethod
     def initialise(params: Dict) -> Market:

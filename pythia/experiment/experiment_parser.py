@@ -1,10 +1,12 @@
 from __future__ import annotations 
 import json
+from pythia.journal.journal import Journal
 from typing import Optional, Dict, cast
 
 from pythia.utils import ArgsParser
 from pythia.agent import Agent, SupervisedAgent
 from pythia.market import Market, DailyHistoricalMarket
+from pythia.journal import Journal
 
 from .analysis import Analysis
 from .analysis import StandardAnalysis
@@ -29,7 +31,7 @@ class ExperimentParser(object):
         self._analysis: Optional[Analysis] = None
         self._market: Optional[Market] = None
         self._agent: Optional[Agent] = None
-        self._journal: Optional[str] = None                 # TODO: put Journal object here
+        self.journal: Journal = Journal()
         self.parse_args(**self.data)
         
     @property
@@ -53,7 +55,6 @@ class ExperimentParser(object):
         else:
             raise ValueError('Property agent has not been set')
 
-
     def parse_args(self, market: Dict={}, analysis: Dict={}, agent: Dict={}) -> None:
         # ---- ANALYSIS -----
         experiment_type = ArgsParser.get_or_default(analysis, 'type', 'standard')
@@ -64,15 +65,14 @@ class ExperimentParser(object):
             raise ValueError('Unexpected value for experiment_type: %s' % (experiment_type))
 
         # ---- MARKET -----
-        # TODO: define market instrument
         market_type = ArgsParser.get_or_default(market, 'type', 'daily-historical')
 
         if market_type.lower() == 'daily-historical':
             self._market = DailyHistoricalMarket.initialise(cast(Dict, ArgsParser.get_or_default(market, 'params', {})))
         else:
             raise ValueError('Unexpected value for experiment_type: %s' % (experiment_type))
-        input_size = 10
-        output_size = 20
+        input_size = self._market.input_size
+        output_size = self._market.output_size
 
         # ---- AGENT -----
         agent_type = ArgsParser.get_or_default(agent, 'type', 'supervised')
@@ -81,3 +81,4 @@ class ExperimentParser(object):
             self._agent = SupervisedAgent.initialise(input_size, output_size, cast(Dict, ArgsParser.get_or_default(agent, 'params', {})))
         else:
             raise ValueError('Unexpected value for experiment_type: %s' % (experiment_type))
+        
