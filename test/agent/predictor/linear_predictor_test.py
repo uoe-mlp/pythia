@@ -18,7 +18,7 @@ def test_check_weights():
     y_train = Tensor([[0.0], [2.0], [4.0], [6.0], [8.0], [10.0], [12.0], [14.0], [16.0], [18.0], [20.0]])
     lp.fit(X_train, y_train)
 
-    assert lp.model.linear.weight.item() == pytest.approx(2.0, abs=0.01, rel=0.01)
+    assert lp.model.linear.weight.item() == pytest.approx(2.0, abs=0.1, rel=0.1)
 
 def test_check_biases():
     lp = LinearPredictor.initialise(1, 1, {"learning_rate": 0.01, "epochs": 3000})
