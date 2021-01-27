@@ -3,6 +3,7 @@ from torch import Tensor
 
 from pythia.agent.predictor import LinearPredictor
 
+
 def test_check_base_params():
     lp = LinearPredictor.initialise(1, 1, {})
 
