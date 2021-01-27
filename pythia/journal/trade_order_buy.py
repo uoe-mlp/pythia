@@ -7,4 +7,4 @@ class TradeOrderBuy(TradeOrder):
     
     def __init__(self, instrument: int, started: Timestamp, percentage: float):
         super(TradeOrderBuy, self).__init__(instrument, started)
-        self.peercentage: float = percentage
+        self.percentage: float = percentage
