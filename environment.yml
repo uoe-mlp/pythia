@@ -4,6 +4,7 @@ dependencies:
   - numpy=1.19.*
   - pandas=1.2.*
   - pytest
+  - pytest-cov
   - mypy
   - jupyterlab
   - pandas-datareader
