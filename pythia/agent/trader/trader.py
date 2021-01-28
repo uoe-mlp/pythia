@@ -30,6 +30,3 @@ class Trader(ABC):
     @abstractclassmethod
     def update_portfolio(self, fills: List[TradeFill]):
         raise NotImplementedError
-
-    def calculate_value(self, prices: Tensor, positions: Tensor) -> float:
-        return float(dot(prices, positions))
