@@ -71,7 +71,7 @@ class DailyHistoricalMarket(Market):
             else:
                 raise ValueError('Type of order not recognized')
         
-        fills = {}
+        fills_data: Dict[int, Tuple[float, float]] = {}
 
         # If net negative, sell
         sell_value: float = 0.0
@@ -79,16 +79,31 @@ class DailyHistoricalMarket(Market):
             if order < 0:
                 sell_value += order * prices[i] * (1 - self.trading_cost)
                 orders[i] = 0
-                fills[i] = (order, prices[i] * (1 - self.trading_cost))
+                fills_data[i] = (float(order), float(prices[i] * (1 - self.trading_cost)))
 
         # With proceedings, buy longs
         orders = orders * prices / sum(orders * prices) * sell_value / (1 + self.trading_cost)
-        raise NotImplementedError
+        for i, order in enumerate(orders):
+            if order > 0:
+                orders[i] = 0
+                fills_data[i] = (float(order), float(prices[i] * (1 + self.trading_cost)))
         
-
         # Step 4: return remaining trades
-
-        return []
+        fills: List[TradeFill] = []
+        for trade in trades:
+            if trade.instrument in fills_data.keys():
+                tmp: Tuple[float, float] = fills_data[trade.instrument]
+            else:
+                tmp = (1.0, float(prices[trade.instrument]))
+            if isinstance(trade, TradeOrderSell):
+                fills.append(TradeFill(trade.instrument, trade.started, trade.quantity * tmp[1], trade.quantity, timestamp, tmp[1], 'sell', trade.id))
+            elif isinstance(trade, TradeOrderBuy):
+                v = sell_value * trade.percentage
+                fills.append(TradeFill(trade.instrument, trade.started, v, v / tmp[1], timestamp, tmp[1], 'buy', trade.id))
+            else:
+                raise ValueError('Type of order not recognized')
+            
+        return fills
 
     @staticmethod
     def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[Tensor, Tensor, List[pd.Timestamp]]:
