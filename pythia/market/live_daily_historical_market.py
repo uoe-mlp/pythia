@@ -19,8 +19,8 @@ class LiveDailyHistoricalMarket(DailyHistoricalMarket):
     def __init__(self, X: Tensor, Y: Tensor, dates: List[pd.Timestamp], trading_cost: float, features: List[str], targets: List[str],
         download_timestamp: Timestamp, source: str, start_date: Timestamp, end_date: Timestamp, feature_keys: List[str], target_keys: List[str]):
         super(LiveDailyHistoricalMarket, self).__init__(X=X, Y=Y, dates=dates, trading_cost=trading_cost, 
-            features_paths=[os.path.join('data', 'markets', source, '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in features], 
-            target_paths=[os.path.join('data', 'markets', source, '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in targets])
+            features_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in features], 
+            target_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in targets])
         self.download_timestamp: Timestamp = download_timestamp
         self.assets: List[str] = sorted(list(set(features + targets)))
         self.features: List[str] = features
@@ -55,7 +55,7 @@ class LiveDailyHistoricalMarket(DailyHistoricalMarket):
         f_df_arr: List[pd.DataFrame] = []
         for asset in sorted(list(set(features + targets))):
 
-            pathname = os.path.join('data', 'markets', '%s_%s_%s.csv' % (asset.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d')))
+            pathname = os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (asset.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d')))
             
             if os.path.isfile(pathname) == True:
                 print('Loading from file: ', pathname)        
