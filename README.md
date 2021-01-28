@@ -1,3 +1,5 @@
+![Build Python](https://github.com/GrowlingM1ke/MLP-CW2-2021/workflows/Build%20Python/badge.svg)
+
 # Pythia
 Times series LSTM based deep learning model. To know more about the Oracle of Delphi, follow the [white rabbit](https://en.wikipedia.org/wiki/Pythia).
 
