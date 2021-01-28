@@ -11,7 +11,7 @@
         "type": "daily-historical",
         "params": {
             "features": ["random_target.csv", "random_features.csv"],
-            "target": "random_features.csv",
+            "targets": "random_features.csv",
             "trading_cost": 0.0001
         }
     },

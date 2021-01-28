@@ -4,7 +4,7 @@ from pythia.market import DailyHistoricalMarket
 def test_daily_historical_market_setup():
     params = {
         "features": ["random_target.csv", "random_features.csv"],
-        "target": "random_features.csv",
+        "targets": "random_features.csv",
         "trading_cost": 0.0001
     }
 
