@@ -1,4 +1,4 @@
-![Build Python](https://github.com/GrowlingM1ke/MLP-CW2-2021/workflows/Build%20Python/badge.svg)
+![Build Python](https://github.com/GrowlingM1ke/MLP-CW2-2021/workflows/Build%20Python/badge.svg) ![codecov](https://codecov.io/gh/GrowlingM1ke/MLP-CW2-2021/branch/main/graph/badge.svg?token=LJ7VBCEHTH)
 
 # Pythia
 Times series deep learning model for trading.
