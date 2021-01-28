@@ -8,3 +8,6 @@ Times series LSTM based deep learning model. To know more about the Oracle of De
 - ```analysis``` is a property of ```experiment``` that identifies the broader temporal framework used. Values can be for instance walk-forward backtest, cross-validation, standard (=train-val-test), robustness analysis, transfer learning and so on
 - ```market``` is a property of ```experiment``` that identifies the environment used
 - ```agent``` is a property of ```experiment``` that identifies the agent. In the first case, ```agent``` is ```supervised``` and has two parameters: ```prediction``` and ```trading```.
+
+![Alt text](./docs/pythia.svg)
+<img src="./docs/pythia.svg">
