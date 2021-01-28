@@ -39,15 +39,8 @@ class LinearPredictor(Predictor):
             self.optimizer.step()
 
     def predict(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """[summary]
-
-        Args:
-            X (Tensor): [description]
-
-        Raises:
-            NotImplementedError: [description]
-
+        """
         Returns:
             Tuple[Tensor, Tensor]: prediction and conviction
         """
-        raise NotImplementedError
+        return self.model(x), self.model(x) * 1

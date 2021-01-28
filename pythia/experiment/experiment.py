@@ -14,6 +14,7 @@ class Experiment(ABC):
         self.market: Market = market
         self.agent: Agent = agent
         self.journal: Journal = journal
+        # TODO: add self.seed
 
     @staticmethod
     @abstractstaticmethod
@@ -22,4 +23,4 @@ class Experiment(ABC):
 
     @abstractmethod
     def run(self):
-        pass
+        raise NotImplementedError

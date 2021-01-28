@@ -28,7 +28,7 @@ class NaiveTrader(Trader):
     def fit(self, prediction: Tensor, conviction: Tensor, Y: Tensor, **kwargs):
         pass
 
-    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
+    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp) -> List[TradeOrder]:
         target_trade = int(argmax(prediction))
         trades: List[TradeOrder] = [TradeOrderSell(i, timestamp, x) for i, x in enumerate(self._portfolio) if x != 0]
         trades.append(TradeOrderBuy(target_trade, timestamp, percentage=1))

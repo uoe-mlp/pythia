@@ -11,7 +11,7 @@ def test_naive_trader_decision():
 
     trader = NaiveTrader.initialise(6, {})
 
-    trades = trader.act(prediction, conviction, Timestamp(2020, 1, 1), [1,2,3,4,5,6])
+    trades = trader.act(prediction, conviction, Timestamp(2020, 1, 1))
 
     assert len(trades) == 2
     assert trades[0].instrument == 0

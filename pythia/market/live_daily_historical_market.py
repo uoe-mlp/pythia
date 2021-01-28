@@ -16,9 +16,9 @@ from .daily_historical_market import DailyHistoricalMarket
 
 class LiveDailyHistoricalMarket(DailyHistoricalMarket):
 
-    def __init__(self, X: Tensor, Y: Tensor, dates: List[pd.Timestamp], trading_cost: float, features: List[str], targets: List[str],
+    def __init__(self, X: Tensor, Y: Tensor, timestamps: List[pd.Timestamp], trading_cost: float, features: List[str], targets: List[str],
         download_timestamp: Timestamp, source: str, start_date: Timestamp, end_date: Timestamp, feature_keys: List[str], target_keys: List[str]):
-        super(LiveDailyHistoricalMarket, self).__init__(X=X, Y=Y, dates=dates, trading_cost=trading_cost, 
+        super(LiveDailyHistoricalMarket, self).__init__(X=X, Y=Y, timestamps=timestamps, trading_cost=trading_cost, 
             features_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in features], 
             target_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in targets])
         self.download_timestamp: Timestamp = download_timestamp

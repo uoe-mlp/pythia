@@ -29,3 +29,11 @@ def test_check_biases():
 
     assert lp.model.linear.bias.item() == pytest.approx(0.0, abs=0.2, rel=0.2)
 
+def test_smoke_two_dim():
+    lp = LinearPredictor.initialise(2, 2, {"learning_rate": 0.01, "epochs": 3000})
+
+    X_train = Tensor([[0.0, 1.5], [1.0, 1.5], [2.0, 1.5], [3.0, 1.5], [4.0, 1], [5.0, 1], [6.0, 1], [7.0, 1], [8.0, 1], [9.0, 1], [10.0, 1]])
+    Y_train = Tensor([[0.0, 0.0], [2.0, 0.0], [4.0, 0.1], [6.0, 0.1], [8.0, 0.1], [10.0, 0.1], [12.0, 0.1], [14.0, 0.1], [16.0, 0.1], [18.0, 0.1], [20.0, 0.1]])
+    lp.fit(X_train, Y_train)
+
+    assert True

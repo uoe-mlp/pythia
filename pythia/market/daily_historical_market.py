@@ -1,11 +1,12 @@
 from __future__ import annotations
 from typing import List, Union, Dict, Tuple
 import pandas as pd
-from torch import Tensor
+from pandas._libs.tslibs import Timestamp
+from torch import Tensor, cat
 import os
 from functools import reduce
 
-from pythia.journal import TradeOrder, TradeFill
+from pythia.journal import TradeOrder, TradeFill, TradeOrderSell, TradeOrderBuy
 from pythia.utils import ArgsParser
 
 from .market import Market
@@ -13,11 +14,10 @@ from .market import Market
 
 class DailyHistoricalMarket(Market):
 
-    def __init__(self, X: Tensor, Y: Tensor, dates: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str]):
-        super(DailyHistoricalMarket, self).__init__(X.shape[1], Y.shape[1])
+    def __init__(self, X: Tensor, Y: Tensor, timestamps: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str]):
+        super(DailyHistoricalMarket, self).__init__(X.shape[1], Y.shape[1], timestamps)
         self.X: Tensor= X
         self.Y: Tensor = Y
-        self.dates: List[pd.Timestamp] = dates
         self.trading_cost: float = trading_cost
         self.features_paths: List[str] = features_paths
         self.target_paths: List[str] = target_paths
@@ -50,11 +50,45 @@ class DailyHistoricalMarket(Market):
 
         return DailyHistoricalMarket(X, Y, dates, trading_cost, features, targets)
 
-    def execute(self, trades: List[TradeOrder]) -> List[TradeFill]:
-        raise NotImplementedError
+    def execute(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
+        # We do not know market impact, the only way to know it is to simulate
+        return self.simulate(trades, timestamp)
 
-    def get_prices(self, timestamp: pd.Timestamp) -> Tensor:
+    def simulate(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
+        # Step 1: evaluate things to sell
+        sell_orders = [x for x in trades if isinstance(x, TradeOrderSell)]
+        idx = sum([timestamp > x for x in self.timestamps])
+        prices = cat((Tensor([1]), self.Y[idx, :]), 0)  # Adding cash
+        value = sum([x.quantity * prices[x.instrument] for x in sell_orders])
+
+        # Step 2: net based on this valuation
+        orders: Tensor = prices * 0
+        for trade in trades:
+            if isinstance(trade, TradeOrderSell):
+                orders[trade.instrument] = orders[trade.instrument] - trade.quantity
+            elif isinstance(trade, TradeOrderBuy):
+                orders[trade.instrument] = orders[trade.instrument] + (trade.percentage * value / prices[trade.instrument])
+            else:
+                raise ValueError('Type of order not recognized')
+        
+        fills = {}
+
+        # If net negative, sell
+        sell_value: float = 0.0
+        for i, order in enumerate(orders):
+            if order < 0:
+                sell_value += order * prices[i] * (1 - self.trading_cost)
+                orders[i] = 0
+                fills[i] = (order, prices[i] * (1 - self.trading_cost))
+
+        # With proceedings, buy longs
+        orders = orders * prices / sum(orders * prices) * sell_value / (1 + self.trading_cost)
         raise NotImplementedError
+        
+
+        # Step 4: return remaining trades
+
+        return []
 
     @staticmethod
     def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[Tensor, Tensor, List[pd.Timestamp]]:

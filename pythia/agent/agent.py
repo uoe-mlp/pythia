@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List
+from typing import Dict, List, Callable
 from abc import ABC, abstractclassmethod
 from torch import Tensor
 from pandas import Timestamp
@@ -15,11 +15,11 @@ class Agent(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def fit(self, X: Tensor, Y: Tensor, **kwargs):
+    def fit(self, X_train: Tensor, Y_train: Tensor, X_val: Tensor, Y_val: Tensor, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod
-    def act(self, x: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
+    def act(self, x: Tensor, timestamp: Timestamp) -> List[TradeOrder]:
         raise NotImplementedError
 
     @abstractclassmethod

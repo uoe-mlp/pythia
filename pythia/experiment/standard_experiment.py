@@ -1,4 +1,8 @@
 from __future__ import annotations
+
+from pandas._libs.tslibs import Timestamp
+from torch._C import Value
+from pythia.journal.trade_order import TradeOrder
 from typing import Optional, List, Dict, cast
 
 from pythia.utils import ArgsParser
@@ -46,4 +50,29 @@ class StandardExperiment(Experiment):
         return StandardExperiment(path, market, agent, journal, train=clean_fractions[0], val=clean_fractions[1], test=clean_fractions[2])
 
     def run(self):
-        pass
+        X = self.market.X
+        Y = self.market.Y
+
+        train_num = round(X.shape[0] * self.train)
+        val_num = round(X.shape[0] * self.val)
+        test_num = X.shape[0] - train_num - val_num
+
+        X_train = X[0:train_num, :]
+        Y_train = Y[0:train_num, :]
+        X_val = X[train_num:train_num+val_num, :]
+        Y_val = Y[train_num:train_num+val_num, :]
+        X_test = X[train_num+val_num:, :]
+        Y_test = Y[train_num+val_num:, :]
+
+        self.agent.fit(X_train, Y_train, X_val, Y_val, 
+            simulator=lambda orders, timestamp: self.market.simulate(orders, timestamp) 
+            if timestamp <= self.market.timestamps[train_num + val_num - 1] 
+            else ValueError('Date is out of traning or validation period.'))
+
+        for i in range(test_num):
+            timestamp = self.market.timestamps[test_num + i]
+            trade_orders = self.agent.act(X_test[i, :], timestamp)
+            self.journal.store_order(trade_orders)
+            trade_fills = self.market.execute(trade_orders, timestamp)
+            self.journal.store_fill(trade_fills)
+            self.agent.update_portfolio(trade_fills)
