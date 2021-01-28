@@ -10,4 +10,3 @@ Times series LSTM based deep learning model. To know more about the Oracle of De
 - ```agent``` is a property of ```experiment``` that identifies the agent. In the first case, ```agent``` is ```supervised``` and has two parameters: ```prediction``` and ```trading```.
 
 ![Alt text](./docs/pythia.svg)
-<img src="./docs/pythia.svg">
