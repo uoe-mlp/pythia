@@ -1,11 +1,13 @@
 name: Build Python
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-
+    env:
+      OS: ubuntu-latest
+      PYTHON: '3.8'
     steps:
     - uses: actions/checkout@master
     - name: Setup Python
@@ -18,10 +20,18 @@ jobs:
         $CONDA/bin/conda env update --file environment.yml --name base
     - name: Lint with mypy
       run: |
-        $CONDA/bin/conda install mypy
         # stop the build if there are Python syntax errors or undefined names
         $CONDA/bin/mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --module pythia
     - name: Test with pytest
       run: |
-        $CONDA/bin/conda install pytest-cov
-        $CONDA/bin/pytest --cov=pythia test/
+        $CONDA/bin/pytest --cov=pythia --cov-report=xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml,./.coverage
+        directory: ./
+        env_vars: OS,PYTHON
+        name: codecov-umbrella
+        fail_ci_if_error: true
+        verbose: true
