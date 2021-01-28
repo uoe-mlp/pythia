@@ -1,0 +1,32 @@
+{
+    "analysis": {
+        "type": "standard",
+        "params": {
+            "train": 0.7,
+            "val": 0.15,
+            "test": 0.15
+        }
+    },
+    "market": {
+        "type": "daily-historical",
+        "params": {
+            "features": ["random_target.csv", "random_features.csv"],
+            "targets": "random_features.csv",
+            "trading_cost": 0.0001
+        }
+    },
+    "agent": {
+        "type": "supervised",
+        "params": {
+            "predictor": {
+                "type": "linear",
+                "params": {
+                    "weight_penalty": 0.0
+                }
+            },
+            "trader": {
+                "type": "naive"
+            }
+        }
+    }
+}
