@@ -78,7 +78,7 @@ class DailyHistoricalMarket(Market):
             elif isinstance(trade, TradeOrderBuy):
                 value = trade.percentage * sell_value
                 price = float(prices[trade.instrument]) * (1 + self.trading_cost)
-                fills.append(TradeFill(trade.instrument, trade.started, value, value / price, timestamp, price, 'sell', trade.id))
+                fills.append(TradeFill(trade.instrument, trade.started, value, value / price, timestamp, price, 'buy', trade.id))
             else:
                 raise ValueError('Type of order not recognized')
 
