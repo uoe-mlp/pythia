@@ -68,9 +68,11 @@ class StandardExperiment(Experiment):
             else ValueError('Date is out of traning or validation period.')) # TODO: here we need to lag returns
 
         for i in range(test_num):
-            timestamp = self.market.timestamps[i]
+            timestamp = self.market.timestamps[train_num + val_num + i]
             trade_orders = self.agent.act(X_test[i, :], timestamp, prices=Y_test[i, :])
             self.journal.store_order(trade_orders)
             trade_fills = self.market.execute(trade_orders, timestamp)
             self.journal.store_fill(trade_fills)
             self.agent.update_portfolio(trade_fills)
+        
+        self.journal.calculate_analytics()
