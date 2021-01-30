@@ -35,7 +35,7 @@ def test_prediction_act():
 
     assert sa.act(X_test, Timestamp(2017, 1, 1, 12))[0].instrument == 0
 
-def test_smoke_two_dim():
+def test_portfolio_update():
     agent = SupervisedAgent.initialise(1, 1, {})
     pf = TradeFill(0, Timestamp(2017, 1, 1, 12), 0, 0, Timestamp(2017, 1, 1, 12), 1, "buy", "uuid")
     agent.update_portfolio([pf])
