@@ -75,4 +75,4 @@ class StandardExperiment(Experiment):
             self.journal.store_fill(trade_fills)
             self.agent.update_portfolio(trade_fills)
         
-        self.journal.calculate_analytics()
+        self.journal.calculate_analytics(self.market.timestamps[train_num + val_num:], Y_test)

@@ -48,10 +48,8 @@ class NaiveTrader(Trader):
         for fill in fills:
             if fill.direction == 'buy':
                 self._portfolio[fill.instrument] += fill.quantity
-                self._portfolio[0] -= fill.value
             elif fill.direction == 'sell':
                 self._portfolio[fill.instrument] -= fill.quantity
-                self._portfolio[0] += fill.value
             else:
                 raise ValueError('Direction not recognized.')
         
