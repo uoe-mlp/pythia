@@ -15,16 +15,5 @@ class Predictor(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def predict(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """[summary]
-
-        Args:
-            X (Tensor): [description]
-
-        Raises:
-            NotImplementedError: [description]
-
-        Returns:
-            Tuple[Tensor, Tensor]: prediction and conviction
-        """
+    def predict(self, x: Tensor) -> Tuple[Tensor, Tensor]: # prediction and conviction
         raise NotImplementedError
