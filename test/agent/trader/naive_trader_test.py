@@ -47,6 +47,6 @@ def test_naive_trader_update():
             direction='buy',
             id='aaa')])
 
-    assert trader.portfolio[0] == 0.78
+    assert trader.portfolio[0] == 1
     assert trader.portfolio[2] == 4
     assert trader.portfolio[4] == 1
