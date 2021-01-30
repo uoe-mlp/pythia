@@ -12,7 +12,7 @@ class Agent(ABC):
 
     @staticmethod
     def initialise(input_size: int, output_size: int, params: Dict) -> Agent:
-        raise NotImplementedError
+        pass
 
     @abstractclassmethod
     def fit(self, X_train: Tensor, Y_train: Tensor, X_val: Tensor, Y_val: Tensor, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
