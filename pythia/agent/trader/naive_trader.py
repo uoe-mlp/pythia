@@ -15,7 +15,7 @@ class NaiveTrader(Trader):
 
     def __init__(self, output_size: int):
         self._output_size: int = output_size
-        self._portfolio: Tensor = eye(output_size, 1) # Fully invested in cash initially (cash index must be 0)
+        self._portfolio: Tensor = eye(1, output_size)[0] # Fully invested in the first asset initially (cash index must be 0)
 
     @property
     def portfolio(self) -> Tensor:
@@ -28,10 +28,17 @@ class NaiveTrader(Trader):
     def fit(self, prediction: Tensor, conviction: Tensor, Y: Tensor, **kwargs):
         pass
 
-    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp) -> List[TradeOrder]:
+    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
         target_trade = int(argmax(prediction))
-        trades: List[TradeOrder] = [TradeOrderSell(i, timestamp, x) for i, x in enumerate(self._portfolio) if x != 0]
-        trades.append(TradeOrderBuy(target_trade, timestamp, percentage=1))
+
+        target_portfolio: Tensor = self._portfolio * 0
+        target_portfolio[target_trade] = 1
+        current_portfolio: Tensor = self.portfolio * prices
+        current_portfolio /= sum(current_portfolio)
+        delta = target_portfolio - current_portfolio
+        
+        trades: List[TradeOrder] = [TradeOrderSell(i, timestamp, x) for i, x in enumerate(self._portfolio) if float(delta[i]) < 0]
+        trades += [TradeOrderBuy(target_trade, timestamp, percentage=1) for i, x in enumerate(self._portfolio) if float(delta[i]) > 0]
         return trades
 
     def update_portfolio(self, fills: List[TradeFill]):

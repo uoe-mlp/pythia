@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from pandas._libs.tslibs import Timestamp
-from torch._C import Value
-from pythia.journal.trade_order import TradeOrder
+from torch import Tensor, cat
 from typing import Optional, List, Dict, cast
 
 from pythia.utils import ArgsParser
@@ -34,7 +32,7 @@ class StandardExperiment(Experiment):
         available = sum([x for x in fractions if x is not None])
         if available > 1:
             fractions = [x / available if x is not None else None for x in fractions]
-
+            
         if not any(fractions):
             # If non available, use default
             clean_fractions: List[float] = StandardExperiment.DEFAULT_SPLIT
@@ -67,11 +65,11 @@ class StandardExperiment(Experiment):
         self.agent.fit(X_train, Y_train, X_val, Y_val, 
             simulator=lambda orders, timestamp: self.market.simulate(orders, timestamp) 
             if timestamp <= self.market.timestamps[train_num + val_num - 1] 
-            else ValueError('Date is out of traning or validation period.'))
+            else ValueError('Date is out of traning or validation period.')) # TODO: here we need to lag returns
 
         for i in range(test_num):
-            timestamp = self.market.timestamps[test_num + i]
-            trade_orders = self.agent.act(X_test[i, :], timestamp)
+            timestamp = self.market.timestamps[i]
+            trade_orders = self.agent.act(X_test[i, :], timestamp, prices=Y_test[i, :])
             self.journal.store_order(trade_orders)
             trade_fills = self.market.execute(trade_orders, timestamp)
             self.journal.store_fill(trade_fills)
