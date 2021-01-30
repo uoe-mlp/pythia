@@ -30,10 +30,12 @@ class LinearPredictor(Predictor):
         return LinearPredictor(input_size=input_size, output_size=output_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs)
 
     def fit(self, X: Tensor, y: Tensor, **kwargs):
+        lag: int = ArgsParser.get_or_default(kwargs, 'lag', 1)
+
         for epoch in range(self.epochs):
             self.optimizer.zero_grad()
-            outputs = self.model(X)
-            loss = self.loss(outputs, y)
+            outputs = self.model(X[:-lag,:])
+            loss = self.loss(outputs, y[lag:,:])
             loss.backward()
             self.optimizer.step()
 
