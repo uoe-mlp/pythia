@@ -24,7 +24,7 @@ class Trader(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
+    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor, returns: bool) -> List[TradeOrder]:
         raise NotImplementedError
 
     @abstractclassmethod

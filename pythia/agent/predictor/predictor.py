@@ -6,6 +6,11 @@ from torch import Tensor
 
 class Predictor(ABC):
 
+    def __init__(self, input_size: int, output_size: int, returns: bool):
+        self.input_size: int = input_size
+        self.output_size: int = output_size
+        self.returns: bool = returns
+
     @staticmethod
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         raise NotImplementedError
