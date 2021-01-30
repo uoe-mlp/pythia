@@ -56,7 +56,7 @@ class DailyHistoricalMarket(Market):
 
     def simulate(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
         idx = sum([timestamp > x for x in self.timestamps])
-        prices = cat((Tensor([1]), self.Y[idx, :]), 0)  # Adding cash
+        prices = self.Y[idx, :]
         
         # Step 1: Sell
         fills: List[TradeFill] = []
@@ -89,6 +89,7 @@ class DailyHistoricalMarket(Market):
         targets_df = reduce(lambda left,right: pd.merge(left,right,on='date'), targets)
         targets_df.sort_index(inplace=True)
         targets_df.bfill(inplace=True)
+        targets_df = pd.concat([pd.Series([1 for x in targets_df.index.tolist()], index=targets_df.index.tolist()), targets_df], axis=1)
 
         for feature in features:
             feature = feature.reindex(targets_df.index)

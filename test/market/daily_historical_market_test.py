@@ -14,9 +14,9 @@ def test_daily_historical_market_setup():
     
     assert market.trading_cost == 1e-4
     assert market.X.shape.numel() ==  2094 * 22
-    assert market.Y.shape.numel() ==  2094 * 11
+    assert market.Y.shape.numel() ==  2094 * 12
     assert market.input_size == 22
-    assert market.output_size == 11
+    assert market.output_size == 12
 
 def test_daily_historical_market_one_trade():
     params = {
