@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Union, Dict, Tuple
 import pandas as pd
 from pandas._libs.tslibs import Timestamp
-from torch import Tensor, cat
+from torch import Tensor, cat, min
 import os
 from functools import reduce
 
@@ -55,54 +55,33 @@ class DailyHistoricalMarket(Market):
         return self.simulate(trades, timestamp)
 
     def simulate(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
-        # Step 1: evaluate things to sell
-        sell_orders = [x for x in trades if isinstance(x, TradeOrderSell)]
         idx = sum([timestamp > x for x in self.timestamps])
         prices = cat((Tensor([1]), self.Y[idx, :]), 0)  # Adding cash
-        value = sum([x.quantity * prices[x.instrument] for x in sell_orders])
-
-        # Step 2: net based on this valuation
-        orders: Tensor = prices * 0
-        for trade in trades:
-            if isinstance(trade, TradeOrderSell):
-                orders[trade.instrument] = orders[trade.instrument] - trade.quantity
-            elif isinstance(trade, TradeOrderBuy):
-                orders[trade.instrument] = orders[trade.instrument] + (trade.percentage * value / prices[trade.instrument])
-            else:
-                raise ValueError('Type of order not recognized')
         
-        fills_data: Dict[int, Tuple[float, float]] = {}
-
-        # If net negative, sell
-        sell_value: float = 0.0
-        for i, order in enumerate(orders):
-            if order < 0:
-                sell_value += order * prices[i] * (1 - self.trading_cost)
-                orders[i] = 0
-                fills_data[i] = (float(order), float(prices[i] * (1 - self.trading_cost)))
-
-        # With proceedings, buy longs
-        orders = orders * prices / sum(orders * prices) * sell_value / (1 + self.trading_cost)
-        for i, order in enumerate(orders):
-            if order > 0:
-                orders[i] = 0
-                fills_data[i] = (float(order), float(prices[i] * (1 + self.trading_cost)))
-        
-        # Step 4: return remaining trades
+        # Step 1: Sell
         fills: List[TradeFill] = []
+        sell_value: float = 0.0
         for trade in trades:
-            if trade.instrument in fills_data.keys():
-                tmp: Tuple[float, float] = fills_data[trade.instrument]
-            else:
-                tmp = (1.0, float(prices[trade.instrument]))
             if isinstance(trade, TradeOrderSell):
-                fills.append(TradeFill(trade.instrument, trade.started, trade.quantity * tmp[1], trade.quantity, timestamp, tmp[1], 'sell', trade.id))
+                value = trade.quantity * float(prices[trade.instrument]) * (1 - self.trading_cost)
+                sell_value += value
+                fills.append(TradeFill(trade.instrument, trade.started, value, trade.quantity, timestamp, float(prices[trade.instrument]) * (1 - self.trading_cost), 'sell', trade.id))
             elif isinstance(trade, TradeOrderBuy):
-                v = sell_value * trade.percentage
-                fills.append(TradeFill(trade.instrument, trade.started, v, v / tmp[1], timestamp, tmp[1], 'buy', trade.id))
+                pass
             else:
                 raise ValueError('Type of order not recognized')
-            
+        
+        # Step 2: Buy
+        for trade in trades:
+            if isinstance(trade, TradeOrderSell):
+                pass
+            elif isinstance(trade, TradeOrderBuy):
+                value = trade.percentage * sell_value
+                price = float(prices[trade.instrument]) * (1 + self.trading_cost)
+                fills.append(TradeFill(trade.instrument, trade.started, value, value / price, timestamp, price, 'sell', trade.id))
+            else:
+                raise ValueError('Type of order not recognized')
+
         return fills
 
     @staticmethod
