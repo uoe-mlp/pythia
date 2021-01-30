@@ -6,6 +6,11 @@ from torch import Tensor
 
 class Predictor(ABC):
 
+    def __init__(self, input_size: int, output_size: int, returns: bool):
+        self.input_size: int = input_size
+        self.output_size: int = output_size
+        self.returns: bool = returns
+
     @staticmethod
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         raise NotImplementedError
@@ -15,16 +20,5 @@ class Predictor(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def predict(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """[summary]
-
-        Args:
-            X (Tensor): [description]
-
-        Raises:
-            NotImplementedError: [description]
-
-        Returns:
-            Tuple[Tensor, Tensor]: prediction and conviction
-        """
+    def predict(self, x: Tensor) -> Tuple[Tensor, Tensor]: # prediction and conviction
         raise NotImplementedError

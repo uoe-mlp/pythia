@@ -19,7 +19,7 @@ class Agent(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def act(self, x: Tensor, timestamp: Timestamp) -> List[TradeOrder]:
+    def act(self, x: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
         raise NotImplementedError
 
     @abstractclassmethod

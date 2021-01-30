@@ -45,9 +45,9 @@ class SupervisedAgent(Agent):
         prediction, conviction = self.predictor.predict(X_train)
         self.trader.fit(prediction=prediction, conviction=conviction, Y=Y_train)
 
-    def act(self, x: Tensor, timestamp: Timestamp) -> List[TradeOrder]:
+    def act(self, x: Tensor, timestamp: Timestamp, prices: Tensor) -> List[TradeOrder]:
         prediction, conviction = self.predictor.predict(x)
-        return self.trader.act(prediction, conviction, timestamp)
+        return self.trader.act(prediction, conviction, timestamp, prices, self.predictor.returns)
 
     def update_portfolio(self, fills: List[TradeFill]):
         self.trader.update_portfolio(fills)

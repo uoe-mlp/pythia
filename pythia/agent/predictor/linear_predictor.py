@@ -14,8 +14,7 @@ from .predictor import Predictor
 class LinearPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, learning_rate: float, weight_decay: float, epochs: int):
-        self.input_size: int = input_size
-        self.output_size: int = output_size
+        super(LinearPredictor, self).__init__(input_size, output_size, False)
         self.learning_rate: float = learning_rate
         self.weight_decay: float = weight_decay
         self.model: LinearRegression = LinearRegression(input_size, output_size)
@@ -31,10 +30,12 @@ class LinearPredictor(Predictor):
         return LinearPredictor(input_size=input_size, output_size=output_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs)
 
     def fit(self, X: Tensor, y: Tensor, **kwargs):
+        lag: int = ArgsParser.get_or_default(kwargs, 'lag', 1)
+
         for epoch in range(self.epochs):
             self.optimizer.zero_grad()
-            outputs = self.model(X)
-            loss = self.loss(outputs, y)
+            outputs = self.model(X[:-lag,:])
+            loss = self.loss(outputs, y[lag:,:])
             loss.backward()
             self.optimizer.step()
 
