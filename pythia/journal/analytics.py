@@ -24,10 +24,11 @@ class Analytics(object):
         holdings_df.iloc[0, 0] = 1      # Initially, all in the first asset (cash)
 
         for fill in fills:
-            if fill.direction.lower() == 'buy':
-                holdings_df.loc[fill.completed][fill.instrument] += fill.quantity
-            elif fill.direction.lower() == 'sell':
-                holdings_df.loc[fill.completed][fill.instrument] -= fill.quantity
+            if fill.completed < timestamps[-1]:                 # We exclude last day as trading last minute is obviously a bad decision (pay commissions, but cannot get returns)
+                if fill.direction.lower() == 'buy':
+                    holdings_df.loc[fill.completed][fill.instrument] += fill.quantity
+                elif fill.direction.lower() == 'sell':
+                    holdings_df.loc[fill.completed][fill.instrument] -= fill.quantity
 
         holdings_df = holdings_df.cumsum()
         prices_df = pd.DataFrame(prices, index=timestamps).astype('double')
