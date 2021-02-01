@@ -4,8 +4,8 @@ import json
 from typing import Optional, Dict, cast
 
 from pythia.utils import ArgsParser
-from pythia.agent import Agent, SupervisedAgent
-from pythia.market import Market, DailyHistoricalMarket
+from pythia.agent import SupervisedAgent
+from pythia.market import DailyHistoricalMarket, LiveDailyHistoricalMarket
 from pythia.journal import Journal
 
 from .experiment import Experiment
@@ -28,6 +28,8 @@ class ExperimentParser(object):
 
         if market_type.lower() == 'daily-historical':
             market_obj = DailyHistoricalMarket.initialise(cast(Dict, ArgsParser.get_or_default(market, 'params', {})))
+        elif market_type.lower() == 'live-daily-historical':
+            market_obj = LiveDailyHistoricalMarket.initialise(cast(Dict, ArgsParser.get_or_default(market, 'params', {})))
         else:
             raise ValueError('Unexpected value for market_type: %s' % (market_type))
         input_size = market_obj.input_size

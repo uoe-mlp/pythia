@@ -6,17 +6,17 @@ from torch import Tensor
 
 class Predictor(ABC):
 
-    def __init__(self, input_size: int, output_size: int, predicting_returns: bool):
+    def __init__(self, input_size: int, output_size: int, predict_returns: bool):
         self.input_size: int = input_size
         self.output_size: int = output_size
-        self.predicting_returns: bool = predicting_returns
+        self.predict_returns: bool = predict_returns
 
     @staticmethod
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         raise NotImplementedError
 
     @abstractclassmethod
-    def fit(self, X: Tensor, y: Tensor, **kwargs):
+    def fit(self, X: Tensor, Y: Tensor, **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod

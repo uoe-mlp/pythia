@@ -28,8 +28,8 @@ class NaiveTrader(Trader):
     def fit(self, prediction: Tensor, conviction: Tensor, Y: Tensor, **kwargs):
         pass
 
-    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor, predicting_returns: bool) -> List[TradeOrder]:
-        if predicting_returns:
+    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor, predict_returns: bool) -> List[TradeOrder]:
+        if predict_returns:
             target_trade = int(argmax(prediction))
         else:
             target_trade = int(argmax(prediction / prices))
