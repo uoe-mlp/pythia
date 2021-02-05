@@ -17,7 +17,7 @@
             "start_date": "01-01-2005",
             "end_date": "05-01-2018",
             "feature_keys": ["Volume", "Close"],
-            "target_keys": "Close"
+            "target_keys": "Adj Close"
         }
     },
     "agent": {
