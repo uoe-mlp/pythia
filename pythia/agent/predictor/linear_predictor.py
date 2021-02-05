@@ -33,37 +33,42 @@ class LinearPredictor(Predictor):
         return LinearPredictor(input_size=input_size, output_size=output_size, window_size=window_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs, predict_returns=predict_returns)
 
     def fit(self, X: Tensor, Y: Tensor, **kwargs):
-        lag: int = ArgsParser.get_or_default(kwargs, 'lag', 1)
+        """
+        Description:
+            The X and Y tensors are data representative of the same day.
+            Since the aim is to predict next day price, we need to lag
+            the Y Tensor by an index (a day).
+        """
         if self.predict_returns:
-            X = X[1:,:]
+            X = X[:-1,:]
             Y = Y[1:,:] / Y[:-1,:] - 1
+        else:
+            X = X[:-1,:]
+            Y = Y[1:,:]
         if self.window_size == 1:
             for epoch in range(self.epochs):
                 self.optimizer.zero_grad()
-                outputs = self.model(X[:-lag,:])
-                loss = self.loss(outputs, Y[lag:,:])
+                outputs = self.model(X)
+                loss = self.loss(outputs, Y)
                 loss.backward()
                 self.optimizer.step()
         
         else:
             X, Y = self.__reshape_window(X, Y)
-            print(X)
-            print(Y)
             for epoch in range(self.epochs):
                 self.optimizer.zero_grad()
-                outputs = self.model(X[:-lag,:])
-                loss = self.loss(outputs, Y[lag:,:])
+                outputs = self.model(X[:-1,:])
+                loss = self.loss(outputs, Y[1:,:])
                 loss.backward()
                 self.optimizer.step()
         
     def __reshape_window(self, X: Tensor, Y: Tensor):
-        Y_new = empty(len(X)-self.window_size, len(Y[0]))
-        X_new = empty(len(X)-self.window_size, self.window_size * len(X[0]))
-        for i in range(len(X)-self.window_size):
+        Y = Y[self.window_size-1:,:]
+        X_new = empty(len(X)-self.window_size+1, self.window_size * len(X[0]))
+        for i in range(len(X)-self.window_size+1):
             # In the case of linear predict, flatten
             X_new[i] = flatten(X[i:self.window_size+i])
-            Y_new[i] = Y[i+self.window_size]
-        return X_new, Y_new
+        return X_new, Y
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         """
