@@ -24,7 +24,7 @@ class LSTMChalvatzisTF(object):
         self.model.add(tf.keras.layers.Dense(output_size))
 
         opt = tf.keras.optimizers.Adam(lr=5e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.001)
-        self.model.compile(optimiser=opt, loss='mse', metrics=['mae'])
+        self.model.compile(optimizer=opt, loss='mse', metrics=['mae'])
 
     def fit(self, X: np.array, Y: np.array, X_val: np.array, Y_val: np.array, epochs: int, batch_size: int) -> None:
         self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, validation_data=(X_val, Y_val))
