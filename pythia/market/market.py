@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Dict, List
 from abc import ABC, abstractclassmethod, abstractstaticmethod
-from torch import Tensor
 from pandas import Timestamp
 
 from pythia.journal import TradeOrder

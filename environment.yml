@@ -8,10 +8,11 @@ dependencies:
   - coverage
   - mypy
   - jupyterlab
-  - pandas-datareader
   - plotly
   - seaborn
   - matplotlib
   - pip
+  - nomkl
   - pip:
     - torchvision
+    - pandas_datareader

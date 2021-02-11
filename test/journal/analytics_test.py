@@ -1,5 +1,5 @@
 from pandas import Timestamp
-from torch import Tensor
+import numpy as np
 import pytest
 
 from pythia.journal import Analytics
@@ -24,7 +24,7 @@ def test_analytics():
         TradeFill(instrument=1, started=timestamps[4], value=0.4, quantity=2, completed=timestamps[4], price=0.20, direction='buy', id='dummy10')
     ]
 
-    prices = Tensor([
+    prices = np.array([
         [1, 0.5, 3],
         [1, 4.95, 1],
         [1, 10, 0.87],

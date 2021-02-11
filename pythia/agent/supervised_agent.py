@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Callable, Dict, Optional, List
 from abc import ABC, abstractclassmethod
-from torch import Tensor
+import numpy as np
 from pandas import Timestamp
 
 from pythia.utils import ArgsParser
@@ -40,12 +40,12 @@ class SupervisedAgent(Agent):
 
         return SupervisedAgent(predictor, trader)
 
-    def fit(self, X_train: Tensor, Y_train: Tensor, X_val: Tensor, Y_val: Tensor, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
+    def fit(self, X_train: np.array, Y_train: np.array, X_val: np.array, Y_val: np.array, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
         self.predictor.fit(X_train, Y_train, **kwargs)
         prediction, conviction = self.predictor.predict(X_train)
         self.trader.fit(prediction=prediction, conviction=conviction, Y=Y_train)
 
-    def act(self, X: Tensor, timestamp: Timestamp, Y: Tensor) -> List[TradeOrder]:
+    def act(self, X: np.array, timestamp: Timestamp, Y: np.array) -> List[TradeOrder]:
         prediction, conviction = self.predictor.predict(X)
         return self.trader.act(prediction, conviction, timestamp, prices=Y[-1, :], predict_returns=self.predictor.predict_returns)
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List
 from abc import ABC, abstractclassmethod, abstractproperty, abstractstaticmethod
-from torch import Tensor
+import numpy as np
 from pandas import Timestamp
 
 from pythia.journal import TradeOrder
@@ -11,7 +11,7 @@ from pythia.journal import TradeFill
 class Trader(ABC):
 
     @abstractproperty
-    def portfolio(self) -> Tensor:
+    def portfolio(self) -> np.array:
         raise NotImplementedError
 
     @staticmethod
@@ -20,11 +20,11 @@ class Trader(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def fit(self, prediction: Tensor, conviction: Tensor, Y: Tensor, **kwargs):
+    def fit(self, prediction: np.array, conviction: np.array, Y: np.array, **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod
-    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor, predict_returns: bool) -> List[TradeOrder]:
+    def act(self, prediction: np.array, conviction: np.array, timestamp: Timestamp, prices: np.array, predict_returns: bool) -> List[TradeOrder]:
         raise NotImplementedError
 
     @abstractclassmethod

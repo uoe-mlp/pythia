@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple
 
 from pandas._libs.tslibs import Timestamp
-from torch.tensor import Tensor
+import numpy as np
 
 from .trade_order import TradeOrder
 from .trade_fill import TradeFill
@@ -27,5 +27,5 @@ class Journal(object):
             else:
                 raise ValueError('One and only one open order should match the id for this fill.')
 
-    def calculate_analytics(self, timestamps: List[Timestamp], prices: Tensor):
+    def calculate_analytics(self, timestamps: List[Timestamp], prices: np.array):
         self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Dict, Tuple
 from abc import ABC, abstractclassmethod
-from torch import Tensor
+import numpy as np
 
 
 class Predictor(ABC):
@@ -16,9 +16,9 @@ class Predictor(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def fit(self, X: Tensor, Y: Tensor, **kwargs):
+    def fit(self, X: np.array, Y: np.array, **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod
-    def predict(self, x: Tensor) -> Tuple[Tensor, Tensor]: # prediction and conviction
+    def predict(self, x: np.array) -> Tuple[np.array, np.array]: # prediction and conviction
         raise NotImplementedError

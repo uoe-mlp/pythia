@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List, Callable
 from abc import ABC, abstractclassmethod
-from torch import Tensor
+import numpy as np
 from pandas import Timestamp
 
 from pythia.journal import TradeOrder
@@ -15,11 +15,11 @@ class Agent(ABC):
         pass
 
     @abstractclassmethod
-    def fit(self, X_train: Tensor, Y_train: Tensor, X_val: Tensor, Y_val: Tensor, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
+    def fit(self, X_train: np.array, Y_train: np.array, X_val: np.array, Y_val: np.array, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod
-    def act(self, X: Tensor, timestamp: Timestamp, Y: Tensor) -> List[TradeOrder]:
+    def act(self, X: np.array, timestamp: Timestamp, Y: np.array) -> List[TradeOrder]:
         raise NotImplementedError
 
     @abstractclassmethod

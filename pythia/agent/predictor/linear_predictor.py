@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, Tuple
 from abc import ABC, abstractclassmethod
+import numpy as np
 from torch import Tensor, empty, flatten
 from torch.optim import Adam, Optimizer
 from torch.nn import MSELoss, Module
@@ -32,33 +33,35 @@ class LinearPredictor(Predictor):
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 1)
         return LinearPredictor(input_size=input_size, output_size=output_size, window_size=window_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs, predict_returns=predict_returns)
 
-    def fit(self, X: Tensor, Y: Tensor, **kwargs):
+    def fit(self, X: np.array, Y: np.array, **kwargs):
         """
         Description:
             The X and Y tensors are data representative of the same day.
             Since the aim is to predict next day price, we need to lag
-            the Y Tensor by an index (a day).
+            the Y np.array by an index (a day).
         """
+        X_tensor = Tensor(X)
+        Y_tensor = Tensor(Y)
         if self.predict_returns:
-            X = X[:-1,:]
-            Y = Y[1:,:] / Y[:-1,:] - 1
+            X_tensor = X_tensor[:-1,:]
+            Y_tensor = Y_tensor[1:,:] / Y_tensor[:-1,:] - 1
         else:
-            X = X[:-1,:]
-            Y = Y[1:,:]
+            X_tensor = X_tensor[:-1,:]
+            Y_tensor = Y_tensor[1:,:]
         if self.window_size == 1:
             for epoch in range(self.epochs):
                 self.optimizer.zero_grad()
-                outputs = self.model(X)
-                loss = self.loss(outputs, Y)
+                outputs = self.model(X_tensor)
+                loss = self.loss(outputs, Y_tensor)
                 loss.backward()
                 self.optimizer.step()
         
         else:
-            X, Y = self.__reshape_window(X, Y)
+            X_tensor, Y_tensor = self.__reshape_window(X_tensor, Y_tensor)
             for epoch in range(self.epochs):
                 self.optimizer.zero_grad()
-                outputs = self.model(X[:-1,:])
-                loss = self.loss(outputs, Y[1:,:])
+                outputs = self.model(X_tensor[:-1,:])
+                loss = self.loss(outputs, Y_tensor[1:,:])
                 loss.backward()
                 self.optimizer.step()
         
@@ -70,9 +73,10 @@ class LinearPredictor(Predictor):
             X_new[i] = flatten(X[i:self.window_size+i])
         return X_new, Y
 
-    def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+    def predict(self, X: np.array) -> Tuple[np.array, np.array]:
         """
         Returns:
-            Tuple[Tensor, Tensor]: prediction and conviction
+            Tuple[np.array, np.array]: prediction and conviction
         """
-        return self.model(X[-1, :]), self.model(X[-1, :]) * 1
+        output = self.model(Tensor(X)[-1, :]).detach().numpy()
+        return output, output * 1

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import time
 from pandas._libs.tslibs import Timestamp
-from torch import Tensor
+import numpy as np
 from typing import List
 import pandas as pd
 
@@ -19,7 +19,7 @@ class Analytics(object):
         self.maximum_drawdown: float = maximum_drawdown
 
     @staticmethod
-    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: Tensor) -> Analytics:
+    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.array) -> Analytics:
         holdings_df = pd.DataFrame(prices * 0, index=timestamps).astype('float')
         holdings_df.iloc[0, 0] = 1      # Initially, all in the first asset (cash)
 

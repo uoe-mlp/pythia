@@ -1,5 +1,5 @@
 import pytest
-from torch import Tensor
+import numpy as np
 from pythia.journal import TradeOrder, TradeFill
 from pythia.agent.predictor import Predictor, LinearPredictor
 from pythia.agent.trader import NaiveTrader
@@ -17,8 +17,8 @@ def test_check_initialisation():
 def test_fit():
     sa = SupervisedAgent.initialise(1, 1, {"predictor": {"type": "linear", "params": {"learning_rate": 0.01, "epochs": 2500}}})
 
-    X_train = Tensor([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0], [6.0], [7.0], [8.0], [9.0], [10.0]])
-    y_train = Tensor([[0.0], [2.0], [4.0], [6.0], [8.0], [10.0], [12.0], [14.0], [16.0], [18.0], [20.0]])
+    X_train = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0], [6.0], [7.0], [8.0], [9.0], [10.0]])
+    y_train = np.array([[0.0], [2.0], [4.0], [6.0], [8.0], [10.0], [12.0], [14.0], [16.0], [18.0], [20.0]])
     sa.fit(X_train, y_train, X_train, y_train, [])
 
     assert sa.predictor.model.linear.weight.item() == pytest.approx(2.0, abs=0.1, rel=0.1)
@@ -27,10 +27,10 @@ def test_fit():
 def test_prediction_act():
     sa = SupervisedAgent.initialise(1, 2, {"predictor": {"type": "linear", "params": {"learning_rate": 0.01, "epochs": 2500}}})
 
-    X_train = Tensor([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0], [6.0], [7.0], [8.0], [9.0], [10.0]])
-    Y_train = Tensor([[0.0, 0.0], [0.0,2.0], [0.0,4.0], [0.0,6.0], [0.0,8.0], [0.0,10.0], [0.0,12.0], [0.0,14.0], [0.0,16.0], [0.0,18.0], [0.0,20.0]])
-    X_test = Tensor([[11.0]])
-    Y_test = Tensor([[1,10]])
+    X_train = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0], [6.0], [7.0], [8.0], [9.0], [10.0]])
+    Y_train = np.array([[0.0, 0.0], [0.0,2.0], [0.0,4.0], [0.0,6.0], [0.0,8.0], [0.0,10.0], [0.0,12.0], [0.0,14.0], [0.0,16.0], [0.0,18.0], [0.0,20.0]])
+    X_test = np.array([[11.0]])
+    Y_test = np.array([[1,10]])
 
     sa.fit(X_train, Y_train, X_train, Y_train, [])
 

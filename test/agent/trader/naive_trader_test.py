@@ -1,4 +1,4 @@
-from torch import Tensor
+import numpy as np
 from pandas import Timestamp
 
 from pythia.agent.trader import NaiveTrader
@@ -6,12 +6,12 @@ from pythia.journal import TradeFill
 
 
 def test_naive_trader_decision():
-    prediction = Tensor([0,0,1,0,0,0])
-    conviction = Tensor([0,0,0,0,0,0])
+    prediction = np.array([0,0,1,0,0,0])
+    conviction = np.array([0,0,0,0,0,0])
 
     trader = NaiveTrader.initialise(6, {})
 
-    trades = trader.act(prediction, conviction, Timestamp(2020, 1, 1), Tensor([1,1,1,1,1,1]), True)
+    trades = trader.act(prediction, conviction, Timestamp(2020, 1, 1), np.array([1,1,1,1,1,1]), True)
 
     assert len(trades) == 2
     assert trades[0].instrument == 0
@@ -22,9 +22,6 @@ def test_naive_trader_decision():
     assert trades[1].started == Timestamp(2020, 1, 1)
 
 def test_naive_trader_update():
-    prediction = Tensor([0,0,1,0,0,0])
-    conviction = Tensor([0,0,0,0,0,0])
-
     trader = NaiveTrader.initialise(6, {})
 
     trader.update_portfolio([

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List
 from abc import ABC, abstractclassmethod, abstractproperty
-from torch import Tensor, argmax, eye
+import numpy as np
 from pandas import Timestamp
 
 from pythia.journal import TradeOrderSell, TradeOrderBuy, TradeOrder
@@ -15,28 +15,28 @@ class NaiveTrader(Trader):
 
     def __init__(self, output_size: int):
         self._output_size: int = output_size
-        self._portfolio: Tensor = eye(1, output_size)[0] # Fully invested in the first asset initially (cash index must be 0)
+        self._portfolio: np.array = np.eye(1, output_size)[0] # Fully invested in the first asset initially (cash index must be 0)
 
     @property
-    def portfolio(self) -> Tensor:
+    def portfolio(self) -> np.array:
         return self._portfolio
 
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
         return NaiveTrader(output_size)
 
-    def fit(self, prediction: Tensor, conviction: Tensor, Y: Tensor, **kwargs):
+    def fit(self, prediction: np.array, conviction: np.array, Y: np.array, **kwargs):
         pass
 
-    def act(self, prediction: Tensor, conviction: Tensor, timestamp: Timestamp, prices: Tensor, predict_returns: bool) -> List[TradeOrder]:
+    def act(self, prediction: np.array, conviction: np.array, timestamp: Timestamp, prices: np.array, predict_returns: bool) -> List[TradeOrder]:
         if predict_returns:
-            target_trade = int(argmax(prediction))
+            target_trade = int(np.argmax(prediction))
         else:
-            target_trade = int(argmax(prediction / prices))
+            target_trade = int(np.argmax(prediction / prices))
 
-        target_portfolio: Tensor = self._portfolio * 0
+        target_portfolio: np.array = self._portfolio * 0
         target_portfolio[target_trade] = 1
-        current_portfolio: Tensor = self.portfolio * prices
+        current_portfolio: np.array = self.portfolio * prices
         current_portfolio /= sum(current_portfolio)
         delta = target_portfolio - current_portfolio
         
