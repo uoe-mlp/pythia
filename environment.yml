@@ -1,18 +1,17 @@
 name: mlp_lstm
 dependencies:
-  - python=3.8
+  - python=3.7
   - numpy=1.19.*
   - pandas=1.2.*
   - pytest
   - pytest-cov
-  - coverage
   - mypy
   - jupyterlab
   - plotly
   - seaborn
   - matplotlib
   - pip
-  - nomkl
+  - tensorflow
   - pip:
     - torchvision
     - pandas_datareader
