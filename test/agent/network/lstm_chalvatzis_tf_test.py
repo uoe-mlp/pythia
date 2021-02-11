@@ -23,10 +23,10 @@ def test_lstm_chalvatzis_tf_smoke():
     Y_test_ls = []
 
     for i in range(X.shape[0] - window_size):
-        if i < 0.9 * (X.shape[0] - window_size):
+        if i < 0.8 * (X.shape[0] - window_size):
             X_train_ls.append(X[i:i + window_size,:])
             Y_train_ls.append(Y[i:i + window_size,:])
-        elif i < 0.95 * (X.shape[0] - window_size):
+        elif i < 0.9 * (X.shape[0] - window_size):
             X_val_ls.append(X[i:i + window_size,:])
             Y_val_ls.append(Y[i:i + window_size,:])
         else:
