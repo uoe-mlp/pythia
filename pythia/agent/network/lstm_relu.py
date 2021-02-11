@@ -14,9 +14,9 @@ class _LSTMReLUSingleLayer(Module):
     The difference between a layer and a cell is that the layer can process a
     sequence, while the cell only expects an instantaneous value.
     """
-    def __init__(self, input_dim: int, hidden_dim: int, bias: bool = True):
+    def __init__(self, input_dim: int, hidden_dim: int, bias: bool = True, dropout: bool = False):
         super().__init__()
-        self.cell = LSTMReLUCell(input_dim, hidden_dim, bias=bias)
+        self.cell = LSTMReLUCell(input_dim, hidden_dim, bias=bias, dropout=dropout)
 
     def forward(self, x: Tensor, hidden: Optional[Tuple[Tensor, Tensor]] = None):
         result = []
@@ -37,13 +37,13 @@ class _LSTMReLUSingleLayer(Module):
 class _LSTMReLULayer(Module):
 
     def __init__(self, input_dim: int, hidden_dim: int, bias: bool = True,
-                 batch_first: bool = False, bidirectional: bool = False):
+                 batch_first: bool = False, bidirectional: bool = False, dropout: bool = False):
         super().__init__()
         self.batch_first = batch_first
         self.bidirectional = bidirectional
-        self.layer_fw = _LSTMReLUSingleLayer(input_dim, hidden_dim, bias=bias)
+        self.layer_fw = _LSTMReLUSingleLayer(input_dim, hidden_dim, bias=bias, dropout=dropout)
         if self.bidirectional:
-            self.layer_bw = _LSTMReLUSingleLayer(input_dim, hidden_dim, bias=bias)
+            self.layer_bw = _LSTMReLUSingleLayer(input_dim, hidden_dim, bias=bias, dropout=dropout)
 
     def forward(self, x: Tensor, hidden: Optional[Tuple[Tensor, Tensor]] = None):
         if self.batch_first:
@@ -180,22 +180,26 @@ class LSTMReLU(Module):
                              "representing the probability of an element being "
                              "zeroed")
         if dropout > 0:
-            warnings.warn("dropout option for quantizable LSTM is ignored. "
-                          "If you are training, please, use nn.LSTM version "
-                          "followed by `prepare` step.")
-            if num_layers == 1:
-                warnings.warn("dropout option adds dropout after all but last "
-                              "recurrent layer, so non-zero dropout expects "
-                              "num_layers greater than 1, but got dropout={} "
-                              "and num_layers={}".format(dropout, num_layers))
+            layers = [_LSTMReLULayer(self.input_size, self.hidden_size,
+                                self.bias, batch_first=False,
+                                bidirectional=self.bidirectional,
+                                dropout=self.dropout)]
+        else:
+            layers = [_LSTMReLULayer(self.input_size, self.hidden_size,
+                                self.bias, batch_first=False,
+                                bidirectional=self.bidirectional)]
 
-        layers = [_LSTMReLULayer(self.input_size, self.hidden_size,
-                             self.bias, batch_first=False,
-                             bidirectional=self.bidirectional)]
         for layer in range(1, num_layers):
-            layers.append(_LSTMReLULayer(self.hidden_size, self.hidden_size,
-                                     self.bias, batch_first=False,
-                                     bidirectional=self.bidirectional))
+            if dropout > 0:
+                layers.append(_LSTMReLULayer(self.hidden_size, self.hidden_size,
+                                        self.bias, batch_first=False,
+                                        bidirectional=self.bidirectional,
+                                        dropout=self.dropout))
+            else:
+                layers.append(_LSTMReLULayer(self.hidden_size, self.hidden_size,
+                                        self.bias, batch_first=False,
+                                        bidirectional=self.bidirectional))
+
         self.layers = ModuleList(layers)
 
     def forward(self, x: Tensor, hidden: Optional[Tuple[Tensor, Tensor]] = None):
