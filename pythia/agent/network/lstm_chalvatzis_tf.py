@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 import tensorflow as tf 
 import numpy as np
 
@@ -29,7 +29,7 @@ class LSTMChalvatzisTF(object):
         self.model.add(tf.keras.layers.Dense(output_size * window_size))
         self.model.add(tf.keras.layers.Reshape((window_size, output_size)))
 
-        opt = tf.keras.optimizers.Adam(lr=5e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.001)
+        opt = tf.keras.optimizers.Adam()
         self.model.compile(optimizer=opt, loss='mse', metrics=['mae'])
 
     def fit(self, X: np.array, Y: np.array, X_val: np.array, Y_val: np.array, epochs: int, batch_size: int) -> None:
