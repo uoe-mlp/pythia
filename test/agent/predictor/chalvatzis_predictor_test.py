@@ -81,7 +81,7 @@ def test_normalization():
     assert X_normalized[5,0] == -1
 
     cp.fit(X_train, y_train)
-    cp.predict(X_train[-1:,:])
+    cp.predict(X_train[-10:,:])
 
 def test_fit_and_predict_shuffle_smoke():
     np.random.seed(12345)
