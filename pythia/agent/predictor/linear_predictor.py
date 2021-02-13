@@ -40,14 +40,9 @@ class LinearPredictor(Predictor):
             Since the aim is to predict next day price, we need to lag
             the Y np.ndarray by an index (a day).
         """
+        X, Y = self.prepare_prices(X, Y)
         X_tensor = Tensor(X)
         Y_tensor = Tensor(Y)
-        if self.predict_returns:
-            X_tensor = X_tensor[:-1,:]
-            Y_tensor = Y_tensor[1:,:] / Y_tensor[:-1,:] - 1
-        else:
-            X_tensor = X_tensor[:-1,:]
-            Y_tensor = Y_tensor[1:,:]
         if self.window_size == 1:
             for epoch in range(self.epochs):
                 self.optimizer.zero_grad()

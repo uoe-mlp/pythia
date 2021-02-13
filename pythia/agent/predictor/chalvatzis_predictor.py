@@ -85,22 +85,16 @@ class ChalvatzisPredictor(Predictor):
             Since the aim is to predict next day price, we need to lag
             the Y np.ndarray by an index (a day).
         """
-
-        if self.normalize:
-            self.__normalize_fit(X)
-
         splits = [X.shape[0]]
         if X_val is not None and Y_val is not None:
             splits.append(X.shape[0] + X_val.shape[0])
             X = np.concatenate([X, X_val], axis=0)
             Y = np.concatenate([Y, Y_val], axis=0)
         
-        if self.predict_returns:
-            X = X[:-1,:]
-            Y = Y[1:,:] / Y[:-1,:] - 1
-        else:
-            X = X[:-1,:]
-            Y = Y[1:,:]
+        X, Y = self.prepare_prices(X, Y)
+        
+        if self.normalize:
+            self.__normalize_fit(X)
 
         if self.normalize:
             X = self.__normalize_apply(X)

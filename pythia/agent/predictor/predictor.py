@@ -22,3 +22,12 @@ class Predictor(ABC):
     @abstractclassmethod
     def predict(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]: # prediction and conviction
         raise NotImplementedError
+
+    def prepare_prices(self, X: np.ndarray, Y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if self.predict_returns:
+            X = X[:-1,:]
+            Y = Y[1:,:] / Y[:-1,:] - 1
+        else:
+            X = X[:-1,:]
+            Y = Y[1:,:]
+        return (X, Y)
