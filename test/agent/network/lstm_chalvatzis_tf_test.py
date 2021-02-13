@@ -41,12 +41,13 @@ def test_lstm_chalvatzis_tf_smoke():
     Y_test = np.array(Y_test_ls)
 
     net = LSTMChalvatzisTF(input_size=1, window_size=window_size, hidden_size=[16, 16], output_size=1, dropout=[0,0])
+    net.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
-    net.describe()
+    net.fit(X_train, Y_train, epochs=5, batch_size=20, validation_data=(X_val, Y_val))
 
-    net.fit(X_train, Y_train, X_val, Y_val, epochs=5, batch_size=100)
+    net.summary()
 
-    net.evaluate(X_val, Y_val)
+    net.evaluate(X_val, Y_val, verbose=1)
 
     Y_predict = net.predict(X_test)
 

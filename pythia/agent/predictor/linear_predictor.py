@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 from abc import ABC, abstractclassmethod
 import numpy as np
 from torch import Tensor, empty, flatten
@@ -33,12 +33,12 @@ class LinearPredictor(Predictor):
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 1)
         return LinearPredictor(input_size=input_size, output_size=output_size, window_size=window_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs, predict_returns=predict_returns)
 
-    def fit(self, X: np.array, Y: np.array, **kwargs):
+    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
         """
         Description:
             The X and Y tensors are data representative of the same day.
             Since the aim is to predict next day price, we need to lag
-            the Y np.array by an index (a day).
+            the Y np.ndarray by an index (a day).
         """
         X_tensor = Tensor(X)
         Y_tensor = Tensor(Y)
@@ -73,10 +73,10 @@ class LinearPredictor(Predictor):
             X_new[i] = flatten(X[i:self.window_size+i])
         return X_new, Y
 
-    def predict(self, X: np.array) -> Tuple[np.array, np.array]:
+    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
-            Tuple[np.array, np.array]: prediction and conviction
+            Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
         output = self.model(Tensor(X)[-1, :]).detach().numpy()
         return output, output * 1
