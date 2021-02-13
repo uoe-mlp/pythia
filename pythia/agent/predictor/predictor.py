@@ -12,16 +12,13 @@ class Predictor(ABC):
         self.predict_returns: bool = predict_returns
 
     @staticmethod
-    def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
-        raise NotImplementedError
+    def initialise(input_size: int, output_size: int, params: Dict) -> Predictor: pass
 
     @abstractclassmethod
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
-        raise NotImplementedError
+    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs): pass
 
     @abstractclassmethod
-    def predict(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]: # prediction and conviction
-        raise NotImplementedError
+    def predict(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]: pass # prediction and conviction
 
     def prepare_prices(self, X: np.ndarray, Y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         if self.predict_returns:

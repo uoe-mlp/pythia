@@ -11,17 +11,13 @@ from pythia.journal import TradeFill
 class Agent(ABC):
 
     @staticmethod
-    def initialise(input_size: int, output_size: int, params: Dict) -> Agent:
-        pass
+    def initialise(input_size: int, output_size: int, params: Dict) -> Agent: pass
 
     @abstractclassmethod
-    def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
-        raise NotImplementedError
+    def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs): pass
 
     @abstractclassmethod
-    def act(self, X: np.ndarray, timestamp: Timestamp, Y: np.ndarray) -> List[TradeOrder]:
-        raise NotImplementedError
+    def act(self, X: np.ndarray, timestamp: Timestamp, Y: np.ndarray) -> List[TradeOrder]: pass
 
     @abstractclassmethod
-    def update_portfolio(self, fills: List[TradeFill]):
-        raise NotImplementedError
+    def update_portfolio(self, fills: List[TradeFill]): pass

@@ -15,13 +15,10 @@ class Market(ABC):
         self.timestamps: List[Timestamp] = timestamps
 
     @staticmethod
-    def initialise(params: Dict) -> Market:
-        raise NotImplementedError
+    def initialise(params: Dict) -> Market: pass
 
     @abstractclassmethod
-    def execute(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
-        raise NotImplementedError
+    def execute(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]: pass
 
     @abstractclassmethod
-    def simulate(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
-        raise NotImplementedError
+    def simulate(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]: pass
