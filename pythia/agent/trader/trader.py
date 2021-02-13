@@ -11,7 +11,7 @@ from pythia.journal import TradeFill
 class Trader(ABC):
 
     @abstractproperty
-    def portfolio(self) -> np.array:
+    def portfolio(self) -> np.ndarray:
         raise NotImplementedError
 
     @staticmethod
@@ -20,11 +20,11 @@ class Trader(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def fit(self, prediction: np.array, conviction: np.array, Y: np.array, **kwargs):
+    def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, **kwargs):
         raise NotImplementedError
 
     @abstractclassmethod
-    def act(self, prediction: np.array, conviction: np.array, timestamp: Timestamp, prices: np.array, predict_returns: bool) -> List[TradeOrder]:
+    def act(self, prediction: np.ndarray, conviction: np.ndarray, timestamp: Timestamp, prices: np.ndarray, predict_returns: bool) -> List[TradeOrder]:
         raise NotImplementedError
 
     @abstractclassmethod

@@ -14,10 +14,10 @@ from .market import Market
 
 class DailyHistoricalMarket(Market):
 
-    def __init__(self, X: np.array, Y: np.array, timestamps: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str]):
+    def __init__(self, X: np.ndarray, Y: np.ndarray, timestamps: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str]):
         super(DailyHistoricalMarket, self).__init__(X.shape[1], Y.shape[1], timestamps)
-        self.X: np.array= X
-        self.Y: np.array = Y
+        self.X: np.ndarray= X
+        self.Y: np.ndarray = Y
         self.trading_cost: float = trading_cost
         self.features_paths: List[str] = features_paths
         self.target_paths: List[str] = target_paths
@@ -95,7 +95,7 @@ class DailyHistoricalMarket(Market):
         return fills
 
     @staticmethod
-    def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[np.array, np.array, List[pd.Timestamp]]:
+    def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[np.ndarray, np.ndarray, List[pd.Timestamp]]:
         targets_df = reduce(lambda left,right: pd.merge(left,right,on='date'), targets)
         targets_df.sort_index(inplace=True)
         targets_df.bfill(inplace=True)

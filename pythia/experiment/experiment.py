@@ -18,9 +18,7 @@ class Experiment(ABC):
 
     @staticmethod
     @abstractstaticmethod
-    def initialise(path: str, market: Market, agent: Agent, journal: Journal, params: Dict=None) -> Experiment:
-        raise NotImplementedError
+    def initialise(path: str, market: Market, agent: Agent, journal: Journal, params: Dict=None) -> Experiment: pass
 
     @abstractmethod
-    def run(self):
-        raise NotImplementedError
+    def run(self): pass

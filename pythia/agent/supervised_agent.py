@@ -40,12 +40,12 @@ class SupervisedAgent(Agent):
 
         return SupervisedAgent(predictor, trader)
 
-    def fit(self, X_train: np.array, Y_train: np.array, X_val: np.array, Y_val: np.array, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
-        self.predictor.fit(X_train, Y_train, **kwargs)
+    def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
+        self.predictor.fit(X_train, Y_train, X_val, Y_val, **kwargs)
         prediction, conviction = self.predictor.predict(X_train)
         self.trader.fit(prediction=prediction, conviction=conviction, Y=Y_train)
 
-    def act(self, X: np.array, timestamp: Timestamp, Y: np.array) -> List[TradeOrder]:
+    def act(self, X: np.ndarray, timestamp: Timestamp, Y: np.ndarray) -> List[TradeOrder]:
         prediction, conviction = self.predictor.predict(X)
         return self.trader.act(prediction, conviction, timestamp, prices=Y[-1, :], predict_returns=self.predictor.predict_returns)
 

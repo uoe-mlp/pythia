@@ -16,7 +16,7 @@ from .daily_historical_market import DailyHistoricalMarket
 
 class LiveDailyHistoricalMarket(DailyHistoricalMarket):
 
-    def __init__(self, X: np.array, Y: np.array, timestamps: List[pd.Timestamp], trading_cost: float, features: List[str], targets: List[str],
+    def __init__(self, X: np.ndarray, Y: np.ndarray, timestamps: List[pd.Timestamp], trading_cost: float, features: List[str], targets: List[str],
         download_timestamp: Timestamp, source: str, start_date: Timestamp, end_date: Timestamp, feature_keys: List[str], target_keys: List[str]):
         super(LiveDailyHistoricalMarket, self).__init__(X=X, Y=Y, timestamps=timestamps, trading_cost=trading_cost, 
             features_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in features], 

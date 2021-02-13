@@ -89,5 +89,13 @@ def test_smoke_5():
     lp_price.fit(X_train, Y_train)
     lp_returns.fit(X_train, Y_train)
 
-  
     assert True
+
+def test_fit_and_predict():
+    lp = LinearPredictor.initialise(1, 1, {"learning_rate": 0.01, "epochs": 2500})
+
+    X_train = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0], [6.0], [7.0], [8.0], [9.0], [10.0], [0.0]])
+    y_train = np.array([[0.0], [0.0], [2.0], [4.0], [6.0], [8.0], [10.0], [12.0], [14.0], [16.0], [18.0], [20.0]])
+    lp.fit(X_train, y_train)
+
+    assert lp.predict(X_train[-2:-1,:])[0] == pytest.approx(y_train[-1,:], abs=1)

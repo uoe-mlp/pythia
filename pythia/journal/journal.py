@@ -27,5 +27,5 @@ class Journal(object):
             else:
                 raise ValueError('One and only one open order should match the id for this fill.')
 
-    def calculate_analytics(self, timestamps: List[Timestamp], prices: np.array):
+    def calculate_analytics(self, timestamps: List[Timestamp], prices: np.ndarray):
         self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices)

@@ -15,28 +15,28 @@ class NaiveTrader(Trader):
 
     def __init__(self, output_size: int):
         self._output_size: int = output_size
-        self._portfolio: np.array = np.eye(1, output_size)[0] # Fully invested in the first asset initially (cash index must be 0)
+        self._portfolio: np.ndarray = np.eye(1, output_size)[0] # Fully invested in the first asset initially (cash index must be 0)
 
     @property
-    def portfolio(self) -> np.array:
+    def portfolio(self) -> np.ndarray:
         return self._portfolio
 
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
         return NaiveTrader(output_size)
 
-    def fit(self, prediction: np.array, conviction: np.array, Y: np.array, **kwargs):
+    def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, **kwargs):
         pass
 
-    def act(self, prediction: np.array, conviction: np.array, timestamp: Timestamp, prices: np.array, predict_returns: bool) -> List[TradeOrder]:
+    def act(self, prediction: np.ndarray, conviction: np.ndarray, timestamp: Timestamp, prices: np.ndarray, predict_returns: bool) -> List[TradeOrder]:
         if predict_returns:
             target_trade = int(np.argmax(prediction))
         else:
             target_trade = int(np.argmax(prediction / prices))
 
-        target_portfolio: np.array = self._portfolio * 0
+        target_portfolio: np.ndarray = self._portfolio * 0
         target_portfolio[target_trade] = 1
-        current_portfolio: np.array = self.portfolio * prices
+        current_portfolio: np.ndarray = self.portfolio * prices
         current_portfolio /= sum(current_portfolio)
         delta = target_portfolio - current_portfolio
         
