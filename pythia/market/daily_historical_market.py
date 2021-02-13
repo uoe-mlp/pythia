@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Union, Dict, Tuple
 import pandas as pd
 from pandas._libs.tslibs import Timestamp
-from torch import Tensor, cat, min
+import numpy as np
 import os
 from functools import reduce
 
@@ -14,10 +14,10 @@ from .market import Market
 
 class DailyHistoricalMarket(Market):
 
-    def __init__(self, X: Tensor, Y: Tensor, timestamps: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str]):
+    def __init__(self, X: np.ndarray, Y: np.ndarray, timestamps: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str]):
         super(DailyHistoricalMarket, self).__init__(X.shape[1], Y.shape[1], timestamps)
-        self.X: Tensor= X
-        self.Y: Tensor = Y
+        self.X: np.ndarray= X
+        self.Y: np.ndarray = Y
         self.trading_cost: float = trading_cost
         self.features_paths: List[str] = features_paths
         self.target_paths: List[str] = target_paths
@@ -95,7 +95,7 @@ class DailyHistoricalMarket(Market):
         return fills
 
     @staticmethod
-    def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[Tensor, Tensor, List[pd.Timestamp]]:
+    def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[np.ndarray, np.ndarray, List[pd.Timestamp]]:
         targets_df = reduce(lambda left,right: pd.merge(left,right,on='date'), targets)
         targets_df.sort_index(inplace=True)
         targets_df.bfill(inplace=True)
@@ -107,4 +107,4 @@ class DailyHistoricalMarket(Market):
 
         features_df = reduce(lambda left,right: pd.merge(left,right,on='date'), features)
 
-        return (Tensor(features_df.values), Tensor(targets_df.values), [pd.Timestamp(x) for x in targets_df.index])
+        return (np.array(features_df.values), np.array(targets_df.values), [pd.Timestamp(x) for x in targets_df.index])

@@ -1,1 +1,2 @@
 from .linear_regression import LinearRegression
+from .lstm_chalvatzis_tf import LSTMChalvatzisTF

@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Dict, List
 from abc import ABC, abstractclassmethod, abstractstaticmethod
-from torch import Tensor
 from pandas import Timestamp
 
 from pythia.journal import TradeOrder
@@ -16,13 +15,10 @@ class Market(ABC):
         self.timestamps: List[Timestamp] = timestamps
 
     @staticmethod
-    def initialise(params: Dict) -> Market:
-        raise NotImplementedError
+    def initialise(params: Dict) -> Market: pass
 
     @abstractclassmethod
-    def execute(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
-        raise NotImplementedError
+    def execute(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]: pass
 
     @abstractclassmethod
-    def simulate(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
-        raise NotImplementedError
+    def simulate(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]: pass

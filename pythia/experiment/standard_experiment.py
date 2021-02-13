@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from torch import Tensor, cat
+import numpy as np
 from typing import Optional, List, Dict, cast
 
 from pythia.utils import ArgsParser
