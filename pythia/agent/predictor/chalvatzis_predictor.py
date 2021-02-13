@@ -64,6 +64,11 @@ class ChalvatzisPredictor(Predictor):
             else:
                 normalize_min = None
                 normalize_max = None
+        else:
+            normalize = False
+            normalize_min = None
+            normalize_max = None
+
         # all_hidden: bool = ArgsParser.get_or_default(params, 'all_hidden', True)
         all_hidden: bool = True
         predict_returns: bool = ArgsParser.get_or_default(params, 'predict_returns', False)
