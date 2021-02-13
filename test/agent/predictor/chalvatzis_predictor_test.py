@@ -54,3 +54,27 @@ def test_fit_and_predict():
     Y_test = cp.predict(X[:-4,:])
 
     assert Y_test[0].shape == (1, 3, 2)
+
+
+def test_normalization():
+    np.random.seed(12345)
+    cp = ChalvatzisPredictor.initialise(input_size=2, output_size=2,
+                                        params=dict(window_size=3, hidden_size=64, epochs=1, predict_returns=False, shuffle=False, batch_size=100, dropout=0.5, all_hidden=False, normalize={'active': True, 'min': -3}))
+
+    assert cp.normalize_min == -3
+    assert cp.normalize_max == 1
+
+    X_train = np.array([[0.0, 1.5], [1.0, 1.5], [2.0, 1.5], [3.0, 1.5], [4.0, 1], [5.0, 1], [6.0, 1], [7.0, 1], [8.0, 1], [9.0, 1], [10.0, 1], [0.0, 1.5]])    
+
+    cp._ChalvatzisPredictor__normalize_fit(X_train)
+
+    np.testing.assert_equal(cp._normalize_fitted_min, np.array([0., 1.]))
+    np.testing.assert_equal(cp._normalize_fitted_max, np.array([10., 1.5]))
+
+    X_normalized = cp._ChalvatzisPredictor__normalize_apply(X_train)
+
+    assert X_normalized[0,0] == -3
+    assert X_normalized[0,1] == 1
+    assert X_normalized[4,1] == -3
+    assert X_normalized[10,0] == 1
+    assert X_normalized[5,0] == -1
