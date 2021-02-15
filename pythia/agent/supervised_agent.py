@@ -9,8 +9,8 @@ from pythia.journal import TradeOrder
 from pythia.journal import TradeFill
 
 from .agent import Agent
-from .predictor import Predictor, LinearPredictor, ChalvatzisPredictor
-from .trader import Trader, NaiveTrader
+from .predictor import Predictor, LinearPredictor, ChalvatzisPredictor, FlatPredictor
+from .trader import Trader, NaiveTrader, BuyAndHoldTrader
 
 
 class SupervisedAgent(Agent):
@@ -28,6 +28,8 @@ class SupervisedAgent(Agent):
             predictor: Predictor = LinearPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
         elif predictor_config['type'].lower() == 'chalvatzis':
             predictor = ChalvatzisPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
+        elif predictor_config['type'].lower() == 'flat':
+            predictor = FlatPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
         else:
             raise ValueError('Predictor type "%s" not recognized'  % (predictor_config['type']))
 
@@ -37,6 +39,8 @@ class SupervisedAgent(Agent):
 
         if trader_config['type'].lower() == 'naive':
             trader: Trader = NaiveTrader.initialise(output_size=output_size, params=trader_params)
+        elif trader_config['type'].lower() == 'buy_and_hold':
+            trader = BuyAndHoldTrader.initialise(output_size=output_size, params=trader_params)
         else:
             raise ValueError('Trader type "%s" not recognized'  % (trader_config['type']))
 
