@@ -40,28 +40,23 @@ class LinearPredictor(Predictor):
             Since the aim is to predict next day price, we need to lag
             the Y np.ndarray by an index (a day).
         """
-        X, Y = self.prepare_prices(X, Y)
+        X = X[:-1,:]
+        Y = self.prepare_prices(Y)
         X_tensor = Tensor(X)
         Y_tensor = Tensor(Y)
-        if self.window_size == 1:
-            for epoch in range(self.epochs):
-                self.optimizer.zero_grad()
-                outputs = self.model(X_tensor)
-                loss = self.loss(outputs, Y_tensor)
-                loss.backward()
-                self.optimizer.step()
+
+        X_tensor, Y_tensor = self.__reshape_window(X_tensor, Y_tensor)
         
-        else:
-            X_tensor, Y_tensor = self.__reshape_window(X_tensor, Y_tensor)
-            for epoch in range(self.epochs):
-                self.optimizer.zero_grad()
-                outputs = self.model(X_tensor[:-1,:])
-                loss = self.loss(outputs, Y_tensor[1:,:])
-                loss.backward()
-                self.optimizer.step()
+        for epoch in range(self.epochs):
+            self.optimizer.zero_grad()
+            outputs = self.model(X_tensor)
+            loss = self.loss(outputs, Y_tensor)
+            loss.backward()
+            self.optimizer.step()
         
-    def __reshape_window(self, X: Tensor, Y: Tensor):
-        Y = Y[self.window_size-1:,:]
+    def __reshape_window(self, X: Tensor, Y: Optional[Tensor]):
+        if Y is not None:
+            Y = Y[self.window_size-1:,:]
         X_new = empty(len(X)-self.window_size+1, self.window_size * len(X[0]))
         for i in range(len(X)-self.window_size+1):
             # In the case of linear predict, flatten
@@ -73,5 +68,25 @@ class LinearPredictor(Predictor):
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
+        X = X[-self.window_size:, :]
+        X_tensor = Tensor(X)
+        X_tensor, _ = self.__reshape_window(X_tensor, None)
+
         output = self.model(Tensor(X)[-1, :]).detach().numpy()
         return output, output * 1
+
+    def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+        X = X[-self.window_size:, :]
+        Y = Y[-self.window_size-1:, :]
+        Y = self.prepare_prices(Y)
+        Y = Y[-X.shape[0]:, :]
+        X_tensor = Tensor(X)
+        Y_tensor = Tensor(Y)
+        X_tensor, Y_tensor = self.__reshape_window(X_tensor, Y_tensor)
+
+        for epoch in range(self.epochs):
+            self.optimizer.zero_grad()
+            outputs = self.model(X_tensor[-1:,:])
+            loss = self.loss(outputs, Y_tensor[-1:,:])
+            loss.backward()
+            self.optimizer.step()

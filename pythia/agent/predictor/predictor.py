@@ -20,11 +20,12 @@ class Predictor(ABC):
     @abstractclassmethod
     def predict(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]: pass # prediction and conviction
 
-    def prepare_prices(self, X: np.ndarray, Y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def prepare_prices(self, Y: np.ndarray) -> np.ndarray:
         if self.predict_returns:
-            X = X[:-1,:]
             Y = Y[1:,:] / Y[:-1,:] - 1
         else:
-            X = X[:-1,:]
             Y = Y[1:,:]
-        return (X, Y)
+        return Y
+    
+    @abstractclassmethod
+    def update(self, X: np.ndarray, Y: np.ndarray) -> None: pass

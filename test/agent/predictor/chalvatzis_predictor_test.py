@@ -22,12 +22,12 @@ def test_sequence_creation_two_dim():
                        5.0, 1], [6.0, 1], [7.0, 1], [8.0, 1], [9.0, 1], [10.0, 1], [0.0, 1.5]])
     Y_train = np.array([[0.0, 0.0], [0.0, 0.0], [2.0, 0.0], [4.0, 0.1], [6.0, 0.1], [8.0, 0.1], [
                        10.0, 0.1], [12.0, 0.1], [14.0, 0.1], [16.0, 0.1], [18.0, 0.1], [20.0, 0.1]])
-    data = cp._ChalvatzisPredictor__create_sequences(X_train, Y_train, [7, 10])
+    data = cp._ChalvatzisPredictor__create_sequences(X_train, Y_train, [7, 11])
 
     assert data[0][0].shape == (5, 3, 2)
     assert data[0][1].shape == (5, 3, 2)
-    assert data[1][0].shape == (3, 3, 2)
-    assert data[1][1].shape == (3, 3, 2)
+    assert data[1][0].shape == (4, 3, 2)
+    assert data[1][1].shape == (4, 3, 2)
     assert data[2][0].shape == (1, 3, 2)
     assert data[2][1].shape == (1, 3, 2)
 
@@ -36,7 +36,7 @@ def test_sequence_creation_two_dim():
     np.testing.assert_almost_equal(
         data[1][0][0, :, :], np.array([[5., 1.], [6., 1.], [7., 1.]]))
     np.testing.assert_almost_equal(
-        data[2][0][-1, :, :], np.array([[8., 1.], [9., 1.], [10., 1.]]))
+        data[2][0][-1, :, :], np.array([[9., 1.], [10., 1.], [0, 1.5]]))
 
 
 def test_fit_and_predict():
@@ -53,7 +53,7 @@ def test_fit_and_predict():
 
     Y_test = cp.predict(X[:-4,:])
 
-    assert Y_test[0].shape == (1, 3, 2)
+    assert Y_test[0].shape == (2,)
 
 
 def test_normalization():
@@ -97,7 +97,7 @@ def test_fit_and_predict_shuffle_smoke():
 
     Y_test = cp.predict(X[:-4,:])
 
-    assert Y_test[0].shape == (1, 3, 2)
+    assert Y_test[0].shape == (2,)
 
 def test_fit_and_predict_multiple_iter():
     np.random.seed(12345)

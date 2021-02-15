@@ -20,4 +20,8 @@ class Agent(ABC):
     def act(self, X: np.ndarray, timestamp: Timestamp, Y: np.ndarray) -> List[TradeOrder]: pass
 
     @abstractclassmethod
-    def update_portfolio(self, fills: List[TradeFill]): pass
+    def update(self, fills: List[TradeFill], X: np.ndarray, Y: np.ndarray): pass
+
+    @abstractclassmethod
+    def clean_portfolio(self) -> None: pass
+

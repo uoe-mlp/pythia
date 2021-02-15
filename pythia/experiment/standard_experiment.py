@@ -65,8 +65,21 @@ class StandardExperiment(Experiment):
         self.agent.fit(X_train, Y_train, X_val, Y_val, 
             simulator=lambda orders, timestamp: self.market.simulate(orders, timestamp) 
             if timestamp <= self.market.timestamps[train_num + val_num - 1] 
-            else ValueError('Date is out of traning or validation period.')) # TODO: here we need to lag returns
+            else ValueError('Date is out of traning or validation period.'))
 
+        for i in range(val_num):
+            idx = train_num + i
+            timestamp = self.market.timestamps[idx]
+            trade_orders = self.agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
+            self.journal.store_order(trade_orders)
+            trade_fills = self.market.execute(trade_orders, timestamp)
+            self.journal.store_fill(trade_fills)
+            self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
+
+        self.journal.run_analytics('validation', self.market.timestamps[train_num:train_num + val_num], Y_val)
+        self.journal.clean()
+        self.agent.clean_portfolio()
+        
         for i in range(test_num):
             idx = train_num + val_num + i
             timestamp = self.market.timestamps[idx]
@@ -74,6 +87,6 @@ class StandardExperiment(Experiment):
             self.journal.store_order(trade_orders)
             trade_fills = self.market.execute(trade_orders, timestamp)
             self.journal.store_fill(trade_fills)
-            self.agent.update_portfolio(trade_fills)
+            self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
         
-        self.journal.calculate_analytics(self.market.timestamps[train_num + val_num:], Y_test)
+        self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test)

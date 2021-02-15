@@ -2,6 +2,7 @@ from __future__ import annotations
 from pythia.journal.journal import Journal
 import json
 from typing import Optional, Dict, cast
+import os
 
 from pythia.utils import ArgsParser
 from pythia.agent import SupervisedAgent
@@ -45,13 +46,14 @@ class ExperimentParser(object):
         
         # ---- ANALYSIS -----
         experiment_type = ArgsParser.get_or_default(analysis, 'type', 'standard')
+        experiment_folder = ArgsParser.get_or_default(analysis, 'folder', os.path.join('data', 'experiments', 'default'))
 
         if experiment_type.lower() == 'standard':
             experiment: Experiment = StandardExperiment.initialise(
                 path=path,
                 market=market_obj,
                 agent=agent_obj,
-                journal=Journal(),
+                journal=Journal(experiment_folder=experiment_folder),
                 params=cast(Dict, ArgsParser.get_or_default(analysis, 'params', {}))
             )
         else:

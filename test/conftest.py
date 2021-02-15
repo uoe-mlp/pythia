@@ -1,4 +1,5 @@
 import os
+import shutil
 
 
 def pytest_sessionstart(session):
@@ -11,4 +12,5 @@ def pytest_sessionstart(session):
 
 
 def pytest_sessionfinish(session, exitstatus):
-    pass
+    if os.path.isdir(os.path.join('test', '.tmp')):
+        shutil.rmtree(os.path.join('test', '.tmp'))

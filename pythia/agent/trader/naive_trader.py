@@ -14,12 +14,7 @@ from .trader import Trader
 class NaiveTrader(Trader):
 
     def __init__(self, output_size: int):
-        self._output_size: int = output_size
-        self._portfolio: np.ndarray = np.eye(1, output_size)[0] # Fully invested in the first asset initially (cash index must be 0)
-
-    @property
-    def portfolio(self) -> np.ndarray:
-        return self._portfolio
+        super(NaiveTrader, self).__init__(output_size=output_size)
 
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
@@ -43,13 +38,4 @@ class NaiveTrader(Trader):
         trades: List[TradeOrder] = [TradeOrderSell(i, timestamp, x) for i, x in enumerate(self._portfolio) if float(delta[i]) < 0]
         trades += [TradeOrderBuy(target_trade, timestamp, percentage=1) for i, x in enumerate(self._portfolio) if float(delta[i]) > 0]
         return trades
-
-    def update_portfolio(self, fills: List[TradeFill]):
-        for fill in fills:
-            if fill.direction == 'buy':
-                self._portfolio[fill.instrument] += fill.quantity
-            elif fill.direction == 'sell':
-                self._portfolio[fill.instrument] -= fill.quantity
-            else:
-                raise ValueError('Direction not recognized.')
         
