@@ -1,6 +1,7 @@
 {
     "analysis": {
         "type": "standard",
+        "folder": "test/.tmp",
         "params": {
             "train": 0.7,
             "val": 0.15,

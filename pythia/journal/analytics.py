@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import time
 from pandas._libs.tslibs import Timestamp
 import numpy as np
-from typing import List
+from typing import List, Dict, Any
 import pandas as pd
 
 from .trade_fill import TradeFill
@@ -70,3 +70,14 @@ class Analytics(object):
     @staticmethod
     def calculate_maximum_drawdonw(timeseries: pd.Series) -> float:
         return timeseries.div(timeseries.cummax()).sub(1).min()
+
+    def to_dict(self) -> Dict[str, Any]:
+        data: Dict[str, Any] = {}
+        data['timeseries'] = self.timeseries.to_list()
+        data['volatility'] = self.volatility
+        data['cumulative_return'] = self.cumulative_return
+        data['sharpe_ratio'] = self.sharpe_ratio
+        data['sortino_ratio'] = self.sortino_ratio
+        data['maximum_drawdown'] = self.maximum_drawdown
+
+        return data

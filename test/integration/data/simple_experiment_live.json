@@ -9,6 +9,7 @@
     },
     "market": {
         "type": "live-daily-historical",
+        "folder": "test/.tmp",
         "params": {
             "features": ["SPY", "DIA", "ONEQ", "IWM"],
             "targets": ["SPY", "DIA", "ONEQ", "IWM"],

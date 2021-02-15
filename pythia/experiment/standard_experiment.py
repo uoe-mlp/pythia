@@ -76,6 +76,7 @@ class StandardExperiment(Experiment):
             self.journal.store_fill(trade_fills)
             self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
 
+        self.journal.run_analytics('validation', self.market.timestamps[train_num:train_num + val_num], Y_val)
         self.journal.clean()
         self.agent.clean_portfolio()
         
@@ -88,4 +89,4 @@ class StandardExperiment(Experiment):
             self.journal.store_fill(trade_fills)
             self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
         
-        self.journal.calculate_analytics(self.market.timestamps[train_num + val_num:], Y_test)
+        self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test)
