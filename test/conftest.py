@@ -12,4 +12,5 @@ def pytest_sessionstart(session):
 
 
 def pytest_sessionfinish(session, exitstatus):
-    shutil.rmtree(os.path.join('test', '.tmp'))
+    if os.path.isdir(os.path.join('test', '.tmp')):
+        shutil.rmtree(os.path.join('test', '.tmp'))
