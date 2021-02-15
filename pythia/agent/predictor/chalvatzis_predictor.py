@@ -13,7 +13,7 @@ from .predictor import Predictor
 class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
-                 epochs: int, batch_size: int, shuffle: bool, predict_returns: bool, 
+                 epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, 
                  initial_learning_rate: float, learning_rate_decay: float, loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
         super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns)
         
@@ -22,7 +22,7 @@ class ChalvatzisPredictor(Predictor):
         self.dropout: float = dropout
         self.all_hidden: bool = all_hidden
         self.epochs: int = epochs
-        self.batch_size: int = batch_size if batch_size is not None else 1
+        self.iter_per_item: int = iter_per_item if iter_per_item is not None else 1
         self.shuffle: bool = shuffle
         self.normalize: bool = normalize
         if self.normalize:
@@ -50,7 +50,7 @@ class ChalvatzisPredictor(Predictor):
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         epochs: int = ArgsParser.get_or_default(params, 'epochs', 100)
         shuffle: bool = ArgsParser.get_or_default(params, 'shuffle', False)
-        batch_size: int = ArgsParser.get_or_default(params, 'batch_size', 1)
+        iter_per_item: int = ArgsParser.get_or_default(params, 'iter_per_item', 1) # Number of backpropagations on a single item before jumping to the next one
         hidden_size: int = ArgsParser.get_or_default(params, 'hidden_size', 64)
         dropout: float = ArgsParser.get_or_default(params, 'dropout', 0)
         learning_rate_decay: float = ArgsParser.get_or_default(params, 'learning_rate_decay', 1)
@@ -75,7 +75,7 @@ class ChalvatzisPredictor(Predictor):
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 5)
 
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
-            epochs=epochs, predict_returns=predict_returns, shuffle=shuffle, batch_size=batch_size, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
+            epochs=epochs, predict_returns=predict_returns, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max)
 
     def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
@@ -105,7 +105,11 @@ class ChalvatzisPredictor(Predictor):
         else:
             X_val, Y_val = X_train, Y_train
 
-        self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val))
+        # Reshaping X and Y to have multiple iterations per item
+        X_train = np.array([X_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([X_train.shape[0] * self.iter_per_item] + list(X_train.shape[1:]))
+        Y_train = np.array([Y_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([Y_train.shape[0] * self.iter_per_item] + list(Y_train.shape[1:]))
+
+        self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val))
 
     def __normalize_fit(self, X: np.ndarray) -> None:
         self._normalize_fitted_min: float = X.min(axis=0)
@@ -157,3 +161,5 @@ class ChalvatzisPredictor(Predictor):
             x = self.__normalize_apply(x)
         output = self.model.predict(np.array([x]))
         return output, np.abs(output)
+
+    # def update(self, X: np.ndarray, Y: np.ndarray) -> None:
