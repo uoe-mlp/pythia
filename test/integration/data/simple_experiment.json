@@ -23,7 +23,7 @@
                 "params": {
                     "weight_penalty": 0.0,
                     "learning_rate": 0.01, 
-                    "epochs": 2500
+                    "epochs": 100
                 }
             },
             "trader": {

@@ -15,7 +15,7 @@
             "trading_cost": 0.0001,
             "source": "yahoo",
             "start_date": "01-01-2005",
-            "end_date": "05-01-2018",
+            "end_date": "05-01-2007",
             "feature_keys": ["Volume", "Close"],
             "target_keys": "Adj Close"
         }
@@ -28,7 +28,7 @@
                 "params": {
                     "weight_penalty": 0.1,
                     "learning_rate": 0.01, 
-                    "epochs": 10000,
+                    "epochs": 100,
                     "predict_returns": true
                 }
             },
