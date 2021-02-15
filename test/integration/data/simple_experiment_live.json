@@ -30,7 +30,7 @@
                 "params": {
                     "weight_penalty": 0.1,
                     "learning_rate": 0.01, 
-                    "epochs": 10,
+                    "epochs": 3,
                     "predict_returns": true
                 }
             },

@@ -30,7 +30,7 @@
                     "initial_learning_rate": 0.01, 
                     "learning_rate_decay": 0.9999,
                     "epochs": 1,
-                    "iter_per_item": 10,
+                    "iter_per_item": 3,
                     "predict_returns": false,
                     "window_size": 22,
                     "dropout": 0.5,
