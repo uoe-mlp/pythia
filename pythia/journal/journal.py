@@ -29,3 +29,8 @@ class Journal(object):
 
     def calculate_analytics(self, timestamps: List[Timestamp], prices: np.ndarray):
         self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices)
+
+    def clean(self):        
+        self.open_orders = []
+        self.trades = []
+        self.analytics = None

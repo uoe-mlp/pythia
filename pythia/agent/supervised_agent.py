@@ -49,5 +49,11 @@ class SupervisedAgent(Agent):
         prediction, conviction = self.predictor.predict(X)
         return self.trader.act(prediction, conviction, timestamp, prices=Y[-1, :], predict_returns=self.predictor.predict_returns)
 
-    def update_portfolio(self, fills: List[TradeFill]):
+    def update(self, fills: List[TradeFill], X: np.ndarray, Y: np.ndarray):
         self.trader.update_portfolio(fills)
+        self.predictor.update(X, Y)
+        y_hat, _ = self.predictor.predict(X)
+        self.trader.update_policy(X, Y, y_hat)
+
+    def clean_portfolio(self) -> None:
+        return self.trader.clean_portfolio()

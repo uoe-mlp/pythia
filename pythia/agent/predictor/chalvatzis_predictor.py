@@ -91,7 +91,8 @@ class ChalvatzisPredictor(Predictor):
             X = np.concatenate([X, X_val], axis=0)
             Y = np.concatenate([Y, Y_val], axis=0)
         
-        X, Y = self.prepare_prices(X, Y)
+        X = X[:-1,:]
+        Y = self.prepare_prices(Y)
         
         if self.normalize:
             self.__normalize_fit(X)
@@ -162,4 +163,5 @@ class ChalvatzisPredictor(Predictor):
         output = self.model.predict(np.array([x]))
         return output, np.abs(output)
 
-    # def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+    def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+        pass # TODO: fix code here

@@ -39,6 +39,6 @@ def test_prediction_act():
 def test_portfolio_update():
     agent = SupervisedAgent.initialise(1, 1, {})
     pf = TradeFill(0, Timestamp(2017, 1, 1, 12), 0, 0, Timestamp(2017, 1, 1, 12), 1, "buy", "uuid")
-    agent.update_portfolio([pf])
+    agent.update([pf], np.array([[0]]), np.array([[1]]))
 
     assert agent.trader._portfolio[0] == 1
