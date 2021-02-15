@@ -128,7 +128,7 @@ class ChalvatzisPredictor(Predictor):
         X_list: List[List[np.ndarray]] = [[]]
         Y_list: List[List[np.ndarray]] = [[]]
 
-        for i in range(X.shape[0] - self.window_size):
+        for i in range(X.shape[0] - self.window_size + 1):
             if (i + self.window_size - 1) < splits[0]:
                 X_list[-1].append(X[i:i + self.window_size,:])
                 Y_list[-1].append(Y[i:i + self.window_size,:])
@@ -160,8 +160,18 @@ class ChalvatzisPredictor(Predictor):
         x = X[-self.window_size:, :]
         if self.normalize:
             x = self.__normalize_apply(x)
-        output = self.model.predict(np.array([x]))
+        output = self.model.predict(np.array([x]))[0,-1,:]
         return output, np.abs(output)
 
     def update(self, X: np.ndarray, Y: np.ndarray) -> None:
-        pass # TODO: fix code here
+        x = X[-self.window_size:, :]
+        y = Y[-self.window_size:, :]
+        if self.normalize:
+            x = self.__normalize_apply(x)
+        data = self.__create_sequences(x, y, [self.window_size])
+        x, y = data[0]
+        
+        X_train = np.array([x,] * self.iter_per_item).transpose([1,0,2,3]).reshape([x.shape[0] * self.iter_per_item] + list(x.shape[1:]))
+        Y_train = np.array([y,] * self.iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.iter_per_item] + list(y.shape[1:]))
+
+        self.model.fit(X_train, Y_train, epochs=self.epochs)

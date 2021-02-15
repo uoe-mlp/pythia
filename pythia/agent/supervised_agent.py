@@ -9,7 +9,7 @@ from pythia.journal import TradeOrder
 from pythia.journal import TradeFill
 
 from .agent import Agent
-from .predictor import Predictor, LinearPredictor
+from .predictor import Predictor, LinearPredictor, ChalvatzisPredictor
 from .trader import Trader, NaiveTrader
 
 
@@ -26,6 +26,8 @@ class SupervisedAgent(Agent):
         predictor_params = ArgsParser.get_or_default(predictor_config, 'params', {})
         if predictor_config['type'].lower() == 'linear':
             predictor: Predictor = LinearPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
+        elif predictor_config['type'].lower() == 'chalvatzis':
+            predictor = ChalvatzisPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
         else:
             raise ValueError('Predictor type "%s" not recognized'  % (predictor_config['type']))
 
@@ -52,8 +54,8 @@ class SupervisedAgent(Agent):
     def update(self, fills: List[TradeFill], X: np.ndarray, Y: np.ndarray):
         self.trader.update_portfolio(fills)
         self.predictor.update(X, Y)
-        y_hat, _ = self.predictor.predict(X)
-        self.trader.update_policy(X, Y, y_hat)
+        prediction, conviction = self.predictor.predict(X)
+        self.trader.update_policy(X, Y, prediction, conviction)
 
     def clean_portfolio(self) -> None:
         return self.trader.clean_portfolio()

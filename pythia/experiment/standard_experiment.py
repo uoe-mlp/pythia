@@ -86,6 +86,6 @@ class StandardExperiment(Experiment):
             self.journal.store_order(trade_orders)
             trade_fills = self.market.execute(trade_orders, timestamp)
             self.journal.store_fill(trade_fills)
-            self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :]) # TODO: check if correct
+            self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
         
         self.journal.calculate_analytics(self.market.timestamps[train_num + val_num:], Y_test)

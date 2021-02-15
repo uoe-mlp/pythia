@@ -46,7 +46,7 @@ class DailyHistoricalMarket(Market):
 
         X, Y, dates = DailyHistoricalMarket.combine_datasets(f_df_arr, t_df_arr)
 
-        trading_cost: float = ArgsParser.get_or_default(params, 'trading_cost', 1e-3)               # TODO: add fixed+linear as an option
+        trading_cost: float = ArgsParser.get_or_default(params, 'trading_cost', 1e-3)
 
         return DailyHistoricalMarket(X, Y, dates, trading_cost, features, targets)
 

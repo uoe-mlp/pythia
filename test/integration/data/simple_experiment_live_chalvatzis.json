@@ -1,0 +1,48 @@
+{
+    "analysis": {
+        "type": "standard",
+        "params": {
+            "train": 0.7,
+            "val": 0.15,
+            "test": 0.15
+        }
+    },
+    "market": {
+        "type": "live-daily-historical",
+        "params": {
+            "features": ["SPY", "DIA", "ONEQ", "IWM"],
+            "targets": ["SPY", "DIA", "ONEQ", "IWM"],
+            "trading_cost": 0.0001,
+            "source": "yahoo",
+            "start_date": "01-01-2005",
+            "end_date": "05-01-2007",
+            "feature_keys": ["Volume", "Close"],
+            "target_keys": "Adj Close"
+        }
+    },
+    "agent": {
+        "type": "supervised",
+        "params": {
+            "predictor": {
+                "type": "chalvatzis",
+                "params": {
+                    "initial_learning_rate": 0.01, 
+                    "learning_rate_decay": 0.9999,
+                    "epochs": 1,
+                    "iter_per_item": 10,
+                    "predict_returns": false,
+                    "window_size": 22,
+                    "dropout": 0.5,
+                    "hidden_size": 64,
+                    "normalize": {
+                        "min": -1,
+                        "max": 1
+                    }
+                }
+            },
+            "trader": {
+                "type": "naive"
+            }
+        }
+    }
+}

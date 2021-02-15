@@ -40,7 +40,7 @@ class Trader(ABC):
             else:
                 raise ValueError('Direction not recognized.')
 
-    def update_policy(self, X: np.ndarray, Y: np.ndarray, y_hat: np.ndarray) -> None: pass
+    def update_policy(self, X: np.ndarray, Y: np.ndarray, prediction: np.ndarray, conviction: np.ndarray) -> None: pass
 
     @staticmethod
     def get_default_portfolio(output_size: int) -> np.ndarray:
