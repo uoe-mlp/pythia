@@ -9,3 +9,7 @@ Times series deep learning model for trading.
 - ```agent``` is the trading agent. In the first case, ```agent``` is ```supervised``` and has two parameters: ```predictor``` and ```trader```. Otherwise, the agent is RL based.
 
 ![Alt text](./docs/pythia.svg)
+
+# LaTeX Docs
+
+Please find our LaTeX documentation [here](https://www.overleaf.com/read/qnywndwmwzqp)
