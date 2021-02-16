@@ -11,8 +11,8 @@
     "market": {
         "type": "live-daily-historical",
         "params": {
-            "features": ["SPY", "DIA", "ONEQ", "IWM"],
-            "targets": ["SPY", "DIA", "ONEQ", "IWM"],
+            "features": ["SPY"],
+            "targets": ["SPY"],
             "trading_cost": 0.0001,
             "source": "yahoo",
             "start_date": "01-01-2005",
@@ -42,7 +42,7 @@
                 }
             },
             "trader": {
-                "type": "naive"
+                "type": "chalvatzis"
             }
         }
     }

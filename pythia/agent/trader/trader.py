@@ -23,9 +23,7 @@ class Trader(ABC):
     def initialise(output_size: int, params: Dict) -> Trader:
         raise NotImplementedError
 
-    @abstractclassmethod
-    def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, **kwargs):
-        raise NotImplementedError
+    def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, predict_returns: bool, **kwargs):pass
 
     @abstractclassmethod
     def act(self, prediction: np.ndarray, conviction: np.ndarray, timestamp: Timestamp, prices: np.ndarray, predict_returns: bool) -> List[TradeOrder]:

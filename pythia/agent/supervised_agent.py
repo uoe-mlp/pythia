@@ -10,7 +10,7 @@ from pythia.journal import TradeFill
 
 from .agent import Agent
 from .predictor import Predictor, LinearPredictor, ChalvatzisPredictor, FlatPredictor
-from .trader import Trader, NaiveTrader, BuyAndHoldTrader
+from .trader import Trader, NaiveTrader, BuyAndHoldTrader, ChalvatzisTrader
 
 
 class SupervisedAgent(Agent):
@@ -41,6 +41,8 @@ class SupervisedAgent(Agent):
             trader: Trader = NaiveTrader.initialise(output_size=output_size, params=trader_params)
         elif trader_config['type'].lower() == 'buy_and_hold':
             trader = BuyAndHoldTrader.initialise(output_size=output_size, params=trader_params)
+        elif trader_config['type'].lower() == 'chalvatzis':
+            trader = ChalvatzisTrader.initialise(output_size=output_size, params=trader_params)
         else:
             raise ValueError('Trader type "%s" not recognized'  % (trader_config['type']))
 
@@ -49,7 +51,7 @@ class SupervisedAgent(Agent):
     def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
         self.predictor.fit(X_train, Y_train, X_val, Y_val, **kwargs)
         prediction, conviction = self.predictor.predict(X_train, all_history=True)
-        self.trader.fit(prediction=prediction, conviction=conviction, Y=Y_train)
+        self.trader.fit(prediction=prediction, conviction=conviction, Y=Y_train, predict_returns=self.predictor.predict_returns)
 
     def act(self, X: np.ndarray, timestamp: Timestamp, Y: np.ndarray) -> List[TradeOrder]:
         prediction, conviction = self.predictor.predict(X)
