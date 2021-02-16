@@ -63,17 +63,23 @@ class LinearPredictor(Predictor):
             X_new[i] = flatten(X[i:self.window_size+i])
         return X_new, Y
 
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
-        X = X[-self.window_size:, :]
-        X_tensor = Tensor(X)
-        X_tensor, _ = self.__reshape_window(X_tensor, None)
+        if all_history:
+            X_tensor = Tensor(X)
+            X_tensor, _ = self.__reshape_window(X_tensor, None)
+            output = self.model(Tensor(X))
+            return output.detach().numpy(), output.detach().numpy() * 1
+        else:
+            X = X[-self.window_size:, :]
+            X_tensor = Tensor(X)
+            X_tensor, _ = self.__reshape_window(X_tensor, None)
 
-        output = self.model(Tensor(X)[-1, :]).detach().numpy()
-        return output, output * 1
+            output = self.model(Tensor(X)[-1, :]).detach().numpy()
+            return output, output * 1
 
     def update(self, X: np.ndarray, Y: np.ndarray) -> None:
         X = X[-self.window_size:, :]

@@ -152,16 +152,25 @@ class ChalvatzisPredictor(Predictor):
 
         return data
 
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray, all_history: bool=True) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
-        x = X[-self.window_size:, :]
-        if self.normalize:
-            x = self.__normalize_apply(x)
-        output = self.model.predict(np.array([x]))[0,-1,:]
-        return output, np.abs(output)
+        if all_history:
+            if self.normalize:
+                X = self.__normalize_apply(X)
+            data = self.__create_sequences(X, X, [X.shape[0]])
+            X, _ = data[0]
+
+            output = self.model.predict(X)[:,-1,:]
+            return output, np.abs(output)
+        else:
+            x = X[-self.window_size:, :]
+            if self.normalize:
+                x = self.__normalize_apply(x)
+            output = self.model.predict(np.array([x]))[0,-1,:]
+            return output, np.abs(output)
 
     def update(self, X: np.ndarray, Y: np.ndarray) -> None:
         x = X[-self.window_size:, :]

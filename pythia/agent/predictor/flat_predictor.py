@@ -30,12 +30,15 @@ class FlatPredictor(Predictor):
         """
         pass
         
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
-        return np.zeros((1, self.output_size)), np.ones((1, self.output_size))
+        if all_history:
+            return np.zeros((X.shape[0], self.output_size)), np.ones((X.shape[0], self.output_size))
+        else:
+            return np.zeros((1, self.output_size)), np.ones((1, self.output_size))
 
     def update(self, X: np.ndarray, Y: np.ndarray) -> None:
         pass

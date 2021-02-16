@@ -18,7 +18,7 @@ class Predictor(ABC):
     def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs): pass
 
     @abstractclassmethod
-    def predict(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]: pass # prediction and conviction
+    def predict(self, x: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]: pass # prediction and conviction
 
     def prepare_prices(self, Y: np.ndarray) -> np.ndarray:
         if self.predict_returns:

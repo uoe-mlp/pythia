@@ -111,4 +111,5 @@ def test_fit_and_predict_multiple_iter():
 
     cp.fit(X[:-20,:], Y[:-20,:], X[-20:-10,:], Y[-20:-10,:])
 
-    assert True
+    predictions, convictions = cp.predict(X, all_history=True)
+    assert predictions.shape == (X.shape[0] - cp.window_size + 1, Y.shape[1])

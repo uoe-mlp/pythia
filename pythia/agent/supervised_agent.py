@@ -48,7 +48,7 @@ class SupervisedAgent(Agent):
 
     def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
         self.predictor.fit(X_train, Y_train, X_val, Y_val, **kwargs)
-        prediction, conviction = self.predictor.predict(X_train)
+        prediction, conviction = self.predictor.predict(X_train, all_history=True)
         self.trader.fit(prediction=prediction, conviction=conviction, Y=Y_train)
 
     def act(self, X: np.ndarray, timestamp: Timestamp, Y: np.ndarray) -> List[TradeOrder]:

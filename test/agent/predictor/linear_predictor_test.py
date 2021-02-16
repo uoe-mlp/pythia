@@ -101,3 +101,8 @@ def test_fit_and_predict():
     lp.fit(X_train, y_train)
 
     assert lp.predict(X_train[-2:-1,:])[0] == pytest.approx(y_train[-1,:], abs=1)
+
+    predictions, convictions = lp.predict(X_train, all_history=True)
+    assert predictions.shape == (12, 1)
+    assert predictions[-1] == pytest.approx(0, abs=1)
+    assert predictions[-2] == pytest.approx(20, abs=1)
