@@ -152,7 +152,7 @@ class ChalvatzisPredictor(Predictor):
 
         return data
 
-    def predict(self, X: np.ndarray, all_history: bool=True) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
