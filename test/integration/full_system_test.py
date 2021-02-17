@@ -15,5 +15,5 @@ def test_naivetrader_linearpredictor_livedailyhistoricalmarket():
     
 def test_chalvatzis():
     experiment = ExperimentParser.parse(os.path.join('test', 'integration', 'data', 'chalvatzis.json'))
-    experiment.run()his 
+    experiment.run()
     assert True
