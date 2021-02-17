@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from pythia.utils import ArgsParser
-from pythia.agent.network import LSTMChalvatzisTF
+from pythia.agent.network import LSTMChalvatzisTF, MeanDirectionalAccuracy
 
 from .predictor import Predictor
 
@@ -39,7 +39,7 @@ class ChalvatzisPredictor(Predictor):
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         self.loss: str = loss
-        self.model.compile(self.optimizer, self.loss, ['mae'])
+        self.model.compile(self.optimizer, self.loss, ['mae', MeanDirectionalAccuracy()])
 
 
     @property
@@ -78,13 +78,14 @@ class ChalvatzisPredictor(Predictor):
             epochs=epochs, predict_returns=predict_returns, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray: # Returns the Y_hat
         """
         Description:
             The X and Y tensors are data representative of the same day.
             Since the aim is to predict next day price, we need to lag
             the Y np.ndarray by an index (a day).
         """
+        Y_in = Y.copy()
         splits = [X.shape[0]]
         if X_val is not None and Y_val is not None:
             splits.append(X.shape[0] + X_val.shape[0])
@@ -105,12 +106,18 @@ class ChalvatzisPredictor(Predictor):
             X_val, Y_val = data[1]
         else:
             X_val, Y_val = X_train, Y_train
-
-        # Reshaping X and Y to have multiple iterations per item
-        X_train = np.array([X_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([X_train.shape[0] * self.iter_per_item] + list(X_train.shape[1:]))
-        Y_train = np.array([Y_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([Y_train.shape[0] * self.iter_per_item] + list(Y_train.shape[1:]))
-
-        self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val))
+        
+        Y_hat = Y_in * np.nan
+        for epoch in range(self.epochs):
+            for i in range(X_train.shape[0]):
+                x_tmp = np.array([X_train[i,:,:],] * self.iter_per_item)
+                y_tmp = np.array([Y_train[i,:,:],] * self.iter_per_item)
+                self.model.fit(x_tmp, y_tmp, epochs=1, validation_data=(x_tmp, y_tmp))
+                y_hat = self.model.predict(x_tmp[-1:,:,:])[0,-1,:]
+                output = self.__normalize_apply_targets(y_hat, revert=True)
+                Y_hat[i,:] = output
+        
+        return Y_hat
 
     def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
         self._normalize_fitted_min_feature: np.ndarray = X.min(axis=0)

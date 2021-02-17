@@ -15,7 +15,7 @@ class Predictor(ABC):
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor: pass
 
     @abstractclassmethod
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs): pass
+    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray: pass
 
     @abstractclassmethod
     def predict(self, x: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]: pass # prediction and conviction

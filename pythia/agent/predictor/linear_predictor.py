@@ -33,7 +33,7 @@ class LinearPredictor(Predictor):
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 1)
         return LinearPredictor(input_size=input_size, output_size=output_size, window_size=window_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs, predict_returns=predict_returns)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
         """
         Description:
             The X and Y tensors are data representative of the same day.
@@ -53,6 +53,8 @@ class LinearPredictor(Predictor):
             loss = self.loss(outputs, Y_tensor)
             loss.backward()
             self.optimizer.step()
+        
+        return self.model(Tensor(X)).detach().numpy()
         
     def __reshape_window(self, X: Tensor, Y: Optional[Tensor]):
         if Y is not None:
