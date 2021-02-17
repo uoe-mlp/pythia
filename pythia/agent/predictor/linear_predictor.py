@@ -15,7 +15,7 @@ from .predictor import Predictor
 class LinearPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, learning_rate: float, weight_decay: float, epochs: int, predict_returns: bool):
-        super(LinearPredictor, self).__init__(input_size, output_size, predict_returns)
+        super(LinearPredictor, self).__init__(input_size, output_size, predict_returns, first_col_cash=False)
         self.learning_rate: float = learning_rate
         self.weight_decay: float = weight_decay
         self.model: LinearRegression = LinearRegression(input_size, output_size)
