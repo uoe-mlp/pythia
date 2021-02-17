@@ -60,7 +60,7 @@ class SupervisedAgent(Agent):
         self.trader.update_portfolio(fills)
         self.predictor.update(X, Y)
         prediction, conviction = self.predictor.predict(X)
-        self.trader.update_policy(X, Y, prediction, conviction)
+        self.trader.update_policy(X, Y, prediction, conviction, predict_returns=self.predictor.predict_returns)
 
     def clean_portfolio(self) -> None:
         return self.trader.clean_portfolio()

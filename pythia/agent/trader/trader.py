@@ -18,6 +18,10 @@ class Trader(ABC):
     def portfolio(self) -> np.ndarray:
         return self._portfolio
 
+    @property
+    def output_size(self) -> int:
+        return self._output_size
+
     @staticmethod
     @abstractstaticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
@@ -38,7 +42,7 @@ class Trader(ABC):
             else:
                 raise ValueError('Direction not recognized.')
 
-    def update_policy(self, X: np.ndarray, Y: np.ndarray, prediction: np.ndarray, conviction: np.ndarray) -> None: pass
+    def update_policy(self, X: np.ndarray, Y: np.ndarray, prediction: np.ndarray, conviction: np.ndarray, predict_returns: bool) -> None: pass
 
     @staticmethod
     def get_default_portfolio(output_size: int) -> np.ndarray:

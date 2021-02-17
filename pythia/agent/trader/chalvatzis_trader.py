@@ -20,6 +20,7 @@ class ChalvatzisTrader(Trader):
         self.realised_returns: np.ndarray = np.array([])
         self.bins: np.ndarray = np.array([])
         self.quantiles: np.ndarray = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+        self.invested: np.ndarray = np.array([False for x in range(output_size - 1)])
 
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
@@ -47,20 +48,40 @@ class ChalvatzisTrader(Trader):
 
     def act(self, prediction: np.ndarray, conviction: np.ndarray, timestamp: Timestamp, prices: np.ndarray, predict_returns: bool) -> List[TradeOrder]:
         if predict_returns:
-            target_trade = int(np.argmax(prediction))
+            exp_returns = prediction
         else:
-            target_trade = int(np.argmax(prediction / prices))
+            exp_returns = prediction / prices - 1
 
-        target_portfolio: np.ndarray = self._portfolio * 0
-        target_portfolio[target_trade] = 1
-        current_portfolio: np.ndarray = self.portfolio * prices
-        current_portfolio /= sum(current_portfolio)
-        delta = target_portfolio - current_portfolio
+        trading_directions: np.ndarray = self.portfolio * 0
         
-        trades: List[TradeOrder] = [TradeOrderSell(i, timestamp, x) for i, x in enumerate(self._portfolio) if float(delta[i]) < 0]
-        trades += [TradeOrderBuy(target_trade, timestamp, percentage=1) for i, x in enumerate(self._portfolio) if float(delta[i]) > 0]
+        exp_returns = exp_returns[1:] # Removing cash
+        for i in range(self.output_size - 1):
+            if exp_returns[i] < 0 and self.invested[i]:
+                trading_directions[i + 1] = -1
+            elif exp_returns[i] > 0 and not self.invested[i]:
+                first_out = (exp_returns[i] >= self.bins[:, i]).argmin(axis=0)
+                bin_avg_ret = self.average_cumulative_returns[(first_out-1, i)]
+                if bin_avg_ret > 0:
+                    trading_directions[i + 1] = 1
+
+        if any(trading_directions > 0) and self.portfolio[0] > 0:
+            trading_directions[0] = -1
+        elif all(trading_directions < 0):
+            trading_directions[0] = +1
+
+        trades: List[TradeOrder] = []
+        for i, td in enumerate(trading_directions):
+            if td < 0:
+                trades.append(TradeOrderSell(i, timestamp, self.portfolio[i]))
+            elif td > 0:
+                trades.append(TradeOrderBuy(i, timestamp, percentage=1/sum(trading_directions > 0)))
+
         return trades
         
+    def update_portfolio(self, fills: List[TradeFill]):
+        super(ChalvatzisTrader, self).update_portfolio(fills)
+        self.invested = self.portfolio[1:] > 0
+
     def __update_bins(self) -> None:
         self.bins = np.concatenate([
             np.zeros((1, self.expected_returns.shape[1],)),
@@ -91,3 +112,22 @@ class ChalvatzisTrader(Trader):
         self.average_cumulative_returns: Dict[Tuple[int, int], float] = {
             key: np.mean(value) for key, value in self.cumulative_returns.items()
         }
+
+    def update_policy(self, X: np.ndarray, Y: np.ndarray, prediction: np.ndarray, conviction: np.ndarray, predict_returns: bool) -> None:
+        if not predict_returns:
+            previous_prices = Y[-2, :]
+            prediction = prediction / previous_prices - 1
+        
+        expected_returns = prediction
+        realised_returns = Y[-1, :] / previous_prices - 1
+        expected_returns = expected_returns.reshape(self.output_size, 1).transpose()
+        realised_returns = realised_returns.reshape(self.output_size, 1).transpose()
+
+        if self.first_target_cash:
+            self.expected_returns = np.concatenate([self.expected_returns, expected_returns[:, 1:]], axis=0)
+            self.realised_returns = np.concatenate([self.realised_returns, realised_returns[:, 1:]], axis=0)
+        else:
+            self.expected_returns = np.concatenate([self.expected_returns, expected_returns], axis=0)
+            self.realised_returns = np.concatenate([self.realised_returns, realised_returns], axis=0)
+
+        self.__update_bins()
