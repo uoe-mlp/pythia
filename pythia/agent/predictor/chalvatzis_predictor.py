@@ -95,10 +95,10 @@ class ChalvatzisPredictor(Predictor):
         Y = self.prepare_prices(Y)
         
         if self.normalize:
-            self.__normalize_fit(X)
+            self.__normalize_fit(X, Y)
+            X = self.__normalize_apply_features(X)
+            Y = self.__normalize_apply_targets(Y)
 
-        if self.normalize:
-            X = self.__normalize_apply(X)
         data = self.__create_sequences(X, Y, splits)
         X_train, Y_train = data[0]
         if X_val is not None and Y_val is not None:
@@ -112,12 +112,31 @@ class ChalvatzisPredictor(Predictor):
 
         self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val))
 
-    def __normalize_fit(self, X: np.ndarray) -> None:
-        self._normalize_fitted_min: float = X.min(axis=0)
-        self._normalize_fitted_max: float = X.max(axis=0)
+    def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
+        self._normalize_fitted_min_feature: np.ndarray = X.min(axis=0)
+        self._normalize_fitted_max_feature: np.ndarray = X.max(axis=0)
+        
+        # Handling the case where min == max, where the denominator in the normalisation would be 0
+        eq = self._normalize_fitted_min_feature == self._normalize_fitted_max_feature
+        self._normalize_fitted_min_feature[eq] -=0.5
+        self._normalize_fitted_max_feature[eq] +=0.5
 
-    def __normalize_apply(self, X: np.ndarray) -> np.ndarray:
-        return (X - self._normalize_fitted_min) / (self._normalize_fitted_max - self._normalize_fitted_min) * (self.normalize_max - self.normalize_min) + self.normalize_min
+        self._normalize_fitted_min_target: np.ndarray = Y.min(axis=0)
+        self._normalize_fitted_max_target: np.ndarray = Y.max(axis=0)
+
+        # Handling the case where min == max, where the denominator in the normalisation would be 0
+        eq = self._normalize_fitted_min_target == self._normalize_fitted_max_target
+        self._normalize_fitted_min_target[eq] -=0.5
+        self._normalize_fitted_max_target[eq] +=0.5
+
+    def __normalize_apply_features(self, X: np.ndarray) -> np.ndarray:
+        return (X - self._normalize_fitted_min_feature) / (self._normalize_fitted_max_feature - self._normalize_fitted_min_feature) * (self.normalize_max - self.normalize_min) + self.normalize_min
+
+    def __normalize_apply_targets(self, Y: np.ndarray, revert: bool=False) -> np.ndarray:
+        if revert:
+            return (Y - self.normalize_min) / (self.normalize_max - self.normalize_min) * (self._normalize_fitted_max_target - self._normalize_fitted_min_target) + self._normalize_fitted_min_target
+        else:
+            return (Y - self._normalize_fitted_min_target) / (self._normalize_fitted_max_target - self._normalize_fitted_min_target) * (self.normalize_max - self.normalize_min) + self.normalize_min
 
     def __create_sequences(self, X: np.ndarray, Y: np.ndarray, splits: List[int]=[]) -> List[Tuple[np.ndarray, np.ndarray]]:
         """Args:
@@ -159,24 +178,27 @@ class ChalvatzisPredictor(Predictor):
         """
         if all_history:
             if self.normalize:
-                X = self.__normalize_apply(X)
+                X = self.__normalize_apply_features(X)
             data = self.__create_sequences(X, X, [X.shape[0]])
             X, _ = data[0]
 
             output = self.model.predict(X)[:,-1,:]
+            output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
         else:
             x = X[-self.window_size:, :]
             if self.normalize:
-                x = self.__normalize_apply(x)
+                x = self.__normalize_apply_features(x)
             output = self.model.predict(np.array([x]))[0,-1,:]
+            output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
 
     def update(self, X: np.ndarray, Y: np.ndarray) -> None:
         x = X[-self.window_size:, :]
         y = Y[-self.window_size:, :]
         if self.normalize:
-            x = self.__normalize_apply(x)
+            x = self.__normalize_apply_features(x)
+            y = self.__normalize_apply_targets(y)
         data = self.__create_sequences(x, y, [self.window_size])
         x, y = data[0]
         

@@ -13,8 +13,9 @@ from .trader import Trader
 
 class ChalvatzisTrader(Trader):
 
-    def __init__(self, output_size: int):
+    def __init__(self, output_size: int, first_target_cash: bool):
         super(ChalvatzisTrader, self).__init__(output_size=output_size)
+        self.first_target_cash: bool = first_target_cash
         self.expected_returns: np.ndarray = np.array([])
         self.realised_returns: np.ndarray = np.array([])
         self.bins: np.ndarray = np.array([])
@@ -22,15 +23,17 @@ class ChalvatzisTrader(Trader):
 
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
-        return ChalvatzisTrader(output_size)
+        first_target_cash: bool = ArgsParser.get_or_default(params, 'first_target_cash', True)
+
+        return ChalvatzisTrader(output_size, first_target_cash)
 
     def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, predict_returns: bool, **kwargs):
         if predict_returns:
             previous_prices = Y[:-1, :]
-            prediction = prediction / previous_prices[-prediction.shape[0]:, :]
+            prediction = prediction / previous_prices[-prediction.shape[0]:, :] - 1
 
         expected_returns = prediction
-        realised_returns = Y[1:, :] / Y[:-1, :]
+        realised_returns = Y[1:, :] / Y[:-1, :] - 1
 
         max_common_size = min([expected_returns.shape[0], realised_returns.shape[0]])
 
@@ -64,10 +67,11 @@ class ChalvatzisTrader(Trader):
 
         for col in range(self.expected_returns.shape[1]):
             for row in range(self.expected_returns.shape[0]):
-                s = self.expected_returns[row:, col]
-                if s[0] >= 0:
-                    first_negative = (s < 0).argmax(axis=0)
-                    self.realised_returns[:first_negative]
+                exp_ret = self.expected_returns[row:, col]
+                real_ret = self.expected_returns[row:, col]
+                if exp_ret[0] >= 0:
+                    first_negative = (exp_ret < 0).argmax(axis=0)
+                    real_ret[:first_negative]
 
                     ValueError() # TODO: continue from here
                 
