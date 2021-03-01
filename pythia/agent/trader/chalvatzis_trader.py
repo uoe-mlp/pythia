@@ -76,5 +76,5 @@ class ChalvatzisTrader(Trader):
                     first_negative = (exp_ret < 0).argmax(axis=0)
                     real_ret[:first_negative]
 
-                    raise ValueError() # TODO: continue from here
+                    raise NotImplementedError() # TODO: continue from here
                 
