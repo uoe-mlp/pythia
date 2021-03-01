@@ -2,18 +2,23 @@ from typing import List, Union, Optional, Callable
 import tensorflow as tf
 
 
-# class OutputObserver(tf.keras.callbacks.Callback):
-#     """"
-#     callback to observe the output of the network
-#     """
+class OutputObserver(tf.keras.callbacks.Callback):
+    """"
+    callback to observe the output of the network
+    """
 
-#     def on_train_begin(self, logs={}):
-#         self.epoch = []
-#         self.out_log = []
+    def __init__(self, model, X_train, Y_hat):
+        self.model = model.seq_model
+        self.X_train = X_train
+        self.Y_hat = Y_hat
+        self.batch_num = 0
 
-#     def on_epoch_end(self, epoch, logs={}):
-#         self.epoch.append(epoch) 
-#         self.out_log.append(self.model.layers[-1].output)
+    def on_batch_end(self, epoch, logs={}):
+        self.Y_hat[self.batch_num : self.batch_num + 1, :, :] = self.model.predict(self.X_train[self.batch_num : self.batch_num + 1, :, :])
+        self.batch_num += 1
+
+    def on_epoch_end(self, epoch, logs={}):
+        self.batch_num = 0
 
 class LSTMChalvatzisTF(object):
 
@@ -29,13 +34,13 @@ class LSTMChalvatzisTF(object):
         self.window_size: int = window_size
         self.output_size: int = output_size
 
-        self.__model = tf.keras.Sequential()
-        self.__model.add(
+        self.seq_model = tf.keras.Sequential()
+        self.seq_model.add(
             tf.keras.layers.InputLayer(input_shape=(window_size, input_size))
         )
         for i, (hs, d) in enumerate(zip(hidden_size_list, dropout_list)):
             if i == 0:
-                self.__model.add(tf.keras.layers.LSTM(
+                self.seq_model.add(tf.keras.layers.LSTM(
                     units=hs, 
                     activation='relu',
                     use_bias=True,
@@ -45,7 +50,7 @@ class LSTMChalvatzisTF(object):
                     recurrent_dropout=0,
                     input_shape=(window_size,input_size)))
             else:
-                self.__model.add(tf.keras.layers.LSTM(
+                self.seq_model.add(tf.keras.layers.LSTM(
                     units=hs, 
                     activation='relu',
                     use_bias=True,
@@ -55,32 +60,32 @@ class LSTMChalvatzisTF(object):
                     recurrent_dropout=0,
                     input_shape=(window_size, hidden_size_list[i-1])))
 
-        self.__model.add(tf.keras.layers.Flatten(
+        self.seq_model.add(tf.keras.layers.Flatten(
                 input_shape=(window_size, hidden_size_list[-1])))
-        self.__model.add(tf.keras.layers.Dense(output_size * window_size, 
+        self.seq_model.add(tf.keras.layers.Dense(output_size * window_size, 
                 input_shape=(input_size * hidden_size_list[-1],)))
-        self.__model.add(
+        self.seq_model.add(
             tf.keras.layers.Reshape((window_size, output_size),
                 input_shape=(output_size * window_size, 1,))
         )
         
     def call(self, inputs):
-        return self.__model.call(inputs)
+        return self.seq_model.call(inputs)
     
     def compile(self, *args, **kwargs):
-        return self.__model.compile(*args, **kwargs)
+        return self.seq_model.compile(*args, **kwargs)
 
     def fit(self, *args, **kwargs):
-        return self.__model.fit(*args, **kwargs)
+        return self.seq_model.fit(*args, **kwargs)
 
     def predict(self, *args, **kwargs):
-        return self.__model.predict(*args, **kwargs)
+        return self.seq_model.predict(*args, **kwargs)
 
     def build(self, *args, **kwargs):
-        return self.__model.build(*args, **kwargs)
+        return self.seq_model.build(*args, **kwargs)
 
     def summary(self, *args, **kwargs):
-        return self.__model.summary(*args, **kwargs)
+        return self.seq_model.summary(*args, **kwargs)
 
     def evaluate(self, *args, **kwargs):
-        return self.__model.evaluate(*args, **kwargs)
+        return self.seq_model.evaluate(*args, **kwargs)

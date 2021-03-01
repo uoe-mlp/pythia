@@ -7,7 +7,7 @@ import tensorflow as tf
 import warnings
 
 from pythia.utils import ArgsParser
-from pythia.agent.network import LSTMChalvatzisTF, MeanDirectionalAccuracy
+from pythia.agent.network import LSTMChalvatzisTF, MeanDirectionalAccuracy, OutputObserver
 
 from .predictor import Predictor
 
@@ -113,7 +113,7 @@ class ChalvatzisPredictor(Predictor):
         X_train = tf.convert_to_tensor(X_train, dtype=tf.dtypes.float32)
         Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
-        self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val))
+        self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val), callbacks=[OutputObserver()])
            
         Y_hat = Y_in + np.random.randn(Y_in.shape[0], Y_in.shape[1])
         if self.normalize:

@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 
-from pythia.agent.network import LSTMChalvatzisTF
+from pythia.agent.network import LSTMChalvatzisTF, OutputObserver
 
 
 def test_lstm_chalvatzis_tf_smoke():
@@ -43,7 +43,7 @@ def test_lstm_chalvatzis_tf_smoke():
     net = LSTMChalvatzisTF(input_size=1, window_size=window_size, hidden_size=[16, 16], output_size=1, dropout=[0,0])
     net.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
-    net.fit(X_train, Y_train, epochs=5, batch_size=20, validation_data=(X_val, Y_val))
+    net.fit(X_train, Y_train, epochs=5, validation_data=(X_val, Y_val), callbacks=[OutputObserver(net, X_train, Y_hat=Y_train)])
 
     net.summary()
 
