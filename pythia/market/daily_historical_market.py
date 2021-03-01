@@ -46,6 +46,12 @@ class DailyHistoricalMarket(Market):
 
         X, Y, dates = DailyHistoricalMarket.combine_datasets(f_df_arr, t_df_arr)
 
+        # Check to see if we should use the previous adjusted close as a parameter
+        if ArgsParser.get_or_default(params, 'close_as_feature', False):
+            dates = dates[1:]
+            X = np.concatenate((X[1:,:], Y[:-1,:]), axis=-1)
+            Y = Y[1:,:]
+
         trading_cost: float = ArgsParser.get_or_default(params, 'trading_cost', 1e-3)
 
         return DailyHistoricalMarket(X, Y, dates, trading_cost, features, targets)
