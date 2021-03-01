@@ -2,7 +2,9 @@ from __future__ import annotations
 from typing import Dict, Tuple, Dict, List, Any, Optional, Callable
 from abc import ABC, abstractclassmethod
 import numpy as np
+from numpy.core.arrayprint import dtype_is_implied
 import tensorflow as tf
+import warnings
 
 from pythia.utils import ArgsParser
 from pythia.agent.network import LSTMChalvatzisTF, MeanDirectionalAccuracy
@@ -40,7 +42,6 @@ class ChalvatzisPredictor(Predictor):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         self.loss: str = loss
         self.model.compile(self.optimizer, self.loss, ['mae', MeanDirectionalAccuracy()])
-
 
     @property
     def last_hidden(self) -> bool:
@@ -107,16 +108,18 @@ class ChalvatzisPredictor(Predictor):
         else:
             X_val, Y_val = X_train, Y_train
         
-        Y_hat = Y_in * np.nan
-        for epoch in range(self.epochs):
-            for i in range(X_train.shape[0]):
-                x_tmp = np.array([X_train[i,:,:],] * self.iter_per_item)
-                y_tmp = np.array([Y_train[i,:,:],] * self.iter_per_item)
-                self.model.fit(x_tmp, y_tmp, epochs=1, validation_data=(x_tmp, y_tmp))
-                y_hat = self.model.predict(x_tmp[-1:,:,:])[0,-1,:]
-                output = self.__normalize_apply_targets(y_hat, revert=True)
-                Y_hat[i,:] = output
+        X_train = np.array([X_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([X_train.shape[0] * self.iter_per_item] + list(X_train.shape[1:]))
+        Y_train = np.array([Y_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([Y_train.shape[0] * self.iter_per_item] + list(Y_train.shape[1:]))
+        X_train = tf.convert_to_tensor(X_train, dtype=tf.dtypes.float32)
+        Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
+        self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val))
+           
+        Y_hat = Y_in + np.random.randn(Y_in.shape[0], Y_in.shape[1])
+        if self.normalize:
+            Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
+        warnings.warn('TODO: This must be fixed, currently we are mocking it')
+
         return Y_hat
 
     def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
@@ -190,14 +193,16 @@ class ChalvatzisPredictor(Predictor):
             X, _ = data[0]
 
             output = self.model.predict(X)[:,-1,:]
-            output = self.__normalize_apply_targets(output, revert=True)
+            if self.normalize:
+                output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
         else:
             x = X[-self.window_size:, :]
             if self.normalize:
                 x = self.__normalize_apply_features(x)
             output = self.model.predict(np.array([x]))[0,-1,:]
-            output = self.__normalize_apply_targets(output, revert=True)
+            if self.normalize:
+                output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
 
     def update(self, X: np.ndarray, Y: np.ndarray) -> None:
