@@ -77,4 +77,3 @@ class ChalvatzisTrader(Trader):
                     real_ret[:first_negative]
 
                     raise NotImplementedError() # TODO: continue from here
-                

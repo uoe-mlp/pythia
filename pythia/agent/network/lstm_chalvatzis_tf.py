@@ -1,5 +1,6 @@
 from typing import List, Union, Optional, Callable
 import tensorflow as tf
+import numpy as np
 
 
 class OutputObserver(tf.keras.callbacks.Callback):
@@ -10,7 +11,7 @@ class OutputObserver(tf.keras.callbacks.Callback):
     def __init__(self, model, X_train, Y_hat):
         self.model = model.seq_model
         self.X_train = X_train
-        self.Y_hat = Y_hat
+        self.Y_hat: np.ndarray = Y_hat if isinstance(Y_hat, np.ndarray) else Y_hat.numpy()
         self.batch_num = 0
 
     def on_batch_end(self, epoch, logs={}):

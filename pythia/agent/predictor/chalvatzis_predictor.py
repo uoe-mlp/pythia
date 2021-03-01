@@ -116,12 +116,7 @@ class ChalvatzisPredictor(Predictor):
         obs = OutputObserver(self.model, X_train, Y_train)
         self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val), callbacks=[obs])
            
-        Y_hat = Y_in + np.random.randn(Y_in.shape[0], Y_in.shape[1])
-        if self.normalize:
-            Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
-        warnings.warn('TODO: This must be fixed, currently we are mocking it')
-
-        return Y_hat
+        return obs.Y_hat[:, -1, :]
 
     def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
         self._normalize_fitted_min_feature: np.ndarray = X.min(axis=0)
