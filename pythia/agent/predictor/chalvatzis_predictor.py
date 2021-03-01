@@ -115,8 +115,11 @@ class ChalvatzisPredictor(Predictor):
         
         obs = OutputObserver(self.model, X_train, Y_train)
         self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val), callbacks=[obs])
-           
-        return obs.Y_hat[:, -1, :]
+        
+        Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
+        if self.normalize:
+            Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
+        return Y_hat
 
     def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
         self._normalize_fitted_min_feature: np.ndarray = X.min(axis=0)

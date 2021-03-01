@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from abc import ABC, abstractclassmethod, abstractproperty
 import numpy as np
 from pandas import Timestamp
@@ -68,12 +68,26 @@ class ChalvatzisTrader(Trader):
             np.ones((1, self.expected_returns.shape[1],)) * np.inf],
             axis=0)
 
-        for col in range(self.expected_returns.shape[1]):
-            for row in range(self.expected_returns.shape[0]):
-                exp_ret = self.expected_returns[row:, col]
-                real_ret = self.realised_returns[row:, col]
-                if exp_ret[0] >= 0:
-                    first_negative = (exp_ret < 0).argmax(axis=0)
-                    real_ret[:first_negative]
+        self.cumulative_returns: Dict[Tuple[int, int], List[float]] = {}
+        for rows in range(self.bins.shape[0] - 1):
+            for cols in range(self.bins.shape[1]):
+                self.cumulative_returns[(rows, cols)] = []
 
-                    raise NotImplementedError() # TODO: continue from here
+        for asset_i in range(self.expected_returns.shape[1]):
+            for date_i in range(self.expected_returns.shape[0]):
+                exp_ret = self.expected_returns[date_i:, asset_i]
+                real_ret = self.realised_returns[date_i:, asset_i]
+                if exp_ret[0] >= 0:
+                    # Calculate cumulative return
+                    first_negative = (exp_ret < 0).argmax(axis=0)
+                    if first_negative > 0:
+                        # Magic of compounding
+                        ret = np.prod(1 + real_ret[:first_negative]) - 1
+                    # Find return bucket
+                    first_out = (exp_ret[0] >= self.bins[:, asset_i]).argmin(axis=0)
+                    # Add cumulative return to return bucket
+                    self.cumulative_returns[(first_out-1, asset_i)].append(ret)
+
+        self.average_cumulative_returns: Dict[Tuple[int, int], float] = {
+            key: np.mean(value) for key, value in self.cumulative_returns.items()
+        }
