@@ -24,11 +24,10 @@ class ChalvatzisTrader(Trader):
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
         first_target_cash: bool = ArgsParser.get_or_default(params, 'first_target_cash', True)
-
         return ChalvatzisTrader(output_size, first_target_cash)
 
     def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, predict_returns: bool, **kwargs):
-        if predict_returns:
+        if not predict_returns:
             previous_prices = Y[:-1, :]
             prediction = prediction / previous_prices[-prediction.shape[0]:, :] - 1
 
@@ -39,6 +38,10 @@ class ChalvatzisTrader(Trader):
 
         self.expected_returns = expected_returns[-max_common_size:, :]
         self.realised_returns = realised_returns[-max_common_size:, :]
+
+        if self.first_target_cash:
+            self.expected_returns = self.expected_returns[:, 1:]
+            self.realised_returns = self.realised_returns[:, 1:]
 
         self.__update_bins()
 
@@ -68,10 +71,10 @@ class ChalvatzisTrader(Trader):
         for col in range(self.expected_returns.shape[1]):
             for row in range(self.expected_returns.shape[0]):
                 exp_ret = self.expected_returns[row:, col]
-                real_ret = self.expected_returns[row:, col]
+                real_ret = self.realised_returns[row:, col]
                 if exp_ret[0] >= 0:
                     first_negative = (exp_ret < 0).argmax(axis=0)
                     real_ret[:first_negative]
 
-                    ValueError() # TODO: continue from here
+                    raise ValueError() # TODO: continue from here
                 
