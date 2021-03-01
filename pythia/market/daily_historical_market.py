@@ -46,12 +46,6 @@ class DailyHistoricalMarket(Market):
 
         X, Y, dates = DailyHistoricalMarket.combine_datasets(f_df_arr, t_df_arr)
 
-        # Check to see if we should use the previous adjusted close as a parameter
-        if ArgsParser.get_or_default(params, 'close_as_feature', False):
-            dates = dates[1:]
-            X = np.concatenate((X[1:,:], Y[:-1,:]), axis=-1)
-            Y = Y[1:,:]
-
         trading_cost: float = ArgsParser.get_or_default(params, 'trading_cost', 1e-3)
 
         return DailyHistoricalMarket(X, Y, dates, trading_cost, features, targets)
@@ -106,11 +100,15 @@ class DailyHistoricalMarket(Market):
         targets_df.sort_index(inplace=True)
         targets_df.bfill(inplace=True)
         targets_df = pd.concat([pd.Series([1 for x in targets_df.index.tolist()], index=targets_df.index.tolist()), targets_df], axis=1)
+        targets_df.columns = [i for i in range(targets_df.shape[1])]
 
-        for feature in features:
+        for i, feature in enumerate(features):
             feature = feature.reindex(targets_df.index)
-            feature.ffill(inplace=True)
+            feature.index.name = 'date'
+            features[i] = feature.ffill()
 
         features_df = reduce(lambda left,right: pd.merge(left,right,on='date'), features)
+        features_df = features_df.dropna()
+        targets_df = targets_df.loc[features_df.index, :]
 
         return (np.array(features_df.values), np.array(targets_df.values), [pd.Timestamp(x) for x in targets_df.index])

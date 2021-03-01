@@ -12,7 +12,7 @@ def test_live_daily_historical_market_setup():
         "source": "yahoo",
         "start_date": "01-01-2005",
         "end_date": "05-01-2018",
-        "feature_keys": ["Volume", "Close"],
+        "feature_keys": ["Volume", "Close", "Prev. Close"],
         "target_keys": "Close",
     }
 
