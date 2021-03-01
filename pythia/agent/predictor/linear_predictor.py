@@ -54,7 +54,7 @@ class LinearPredictor(Predictor):
             loss.backward()
             self.optimizer.step()
         
-        return self.model(Tensor(X)).detach().numpy()
+        return self.model(Tensor(X_tensor)).detach().numpy()
         
     def __reshape_window(self, X: Tensor, Y: Optional[Tensor]):
         if Y is not None:
