@@ -52,10 +52,14 @@ class Predictor(ABC):
         Y = Y[:,1:]
 
     def add_cash(self, prediction: np.ndarray, confidence: np.ndarray) -> np.ndarray:
-        prediction_new = np.ones((prediction.shape[0],prediction.shape[1]+1))
-        prediction_new[:,1:] = prediction
+        if self.predict_returns:
+            prediction_new = np.zeros((prediction.shape[0],prediction.shape[1]+1))
+            confidence_new = np.zeros((confidence.shape[0],confidence.shape[1]+1))
+        else:
+            prediction_new = np.ones((prediction.shape[0],prediction.shape[1]+1))
+            confidence_new = np.ones((confidence.shape[0],confidence.shape[1]+1))
 
-        confidence_new = np.ones((confidence.shape[0],confidence.shape[1]+1))
+        prediction_new[:,1:] = prediction
         confidence_new[:,1:] = confidence
 
         return prediction_new, confidence_new
