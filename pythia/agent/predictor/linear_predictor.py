@@ -33,7 +33,7 @@ class LinearPredictor(Predictor):
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 1)
         return LinearPredictor(input_size=input_size, output_size=output_size, window_size=window_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs, predict_returns=predict_returns)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
         """
         Description:
             The X and Y tensors are data representative of the same day.
@@ -65,7 +65,7 @@ class LinearPredictor(Predictor):
             X_new[i] = flatten(X[i:self.window_size+i])
         return X_new, Y
 
-    def predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
+    def _inner_predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
@@ -83,7 +83,7 @@ class LinearPredictor(Predictor):
             output = self.model(Tensor(X)[-1, :]).detach().numpy()
             return output, output * 1
 
-    def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+    def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
         X = X[-self.window_size:, :]
         Y = Y[-self.window_size-1:, :]
         Y = self.prepare_prices(Y)

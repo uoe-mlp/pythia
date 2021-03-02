@@ -21,7 +21,7 @@ class Predictor(ABC):
     def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
         Y_new = self.remove_cash(Y.copy()) if self.first_col_cash else Y.copy()
         Y_val_new = self.remove_cash(Y_val.copy()) if self.first_col_cash and Y_val is not None else None
-        self._inner_fit(X, Y_new, X_val, Y_val, **kwargs)
+        return self._inner_fit(X, Y_new, X_val, Y_val, **kwargs)
 
     @abstractclassmethod
     def _inner_predict(self, x: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]: pass

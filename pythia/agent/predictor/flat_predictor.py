@@ -21,7 +21,7 @@ class FlatPredictor(Predictor):
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         return FlatPredictor(input_size=input_size, output_size=output_size)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
         """
         Description:
             The X and Y tensors are data representative of the same day.
@@ -33,7 +33,7 @@ class FlatPredictor(Predictor):
         else:
             return Y * 1
         
-    def predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
+    def _inner_predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
@@ -43,5 +43,5 @@ class FlatPredictor(Predictor):
         else:
             return np.zeros((1, self.output_size)), np.ones((1, self.output_size))
 
-    def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+    def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
         pass

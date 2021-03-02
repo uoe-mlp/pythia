@@ -43,6 +43,7 @@ class ChalvatzisPredictor(Predictor):
         self.loss: str = loss
         self.model.compile(self.optimizer, self.loss, ['mae', MeanDirectionalAccuracy()])
 
+
     @property
     def last_hidden(self) -> bool:
         return not self.all_hidden
@@ -80,11 +81,7 @@ class ChalvatzisPredictor(Predictor):
             epochs=epochs, predict_returns=predict_returns, first_col_cash=first_col_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max)
 
-<<<<<<< HEAD
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
-=======
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray: # Returns the Y_hat
->>>>>>> 34a2243... Returning Y_hats during fit
         """
         Description:
             The X and Y tensors are data representative of the same day.
