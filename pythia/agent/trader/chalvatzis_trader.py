@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from abc import ABC, abstractclassmethod, abstractproperty
 import numpy as np
 from pandas import Timestamp
@@ -24,11 +24,10 @@ class ChalvatzisTrader(Trader):
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
         first_target_cash: bool = ArgsParser.get_or_default(params, 'first_target_cash', True)
-
         return ChalvatzisTrader(output_size, first_target_cash)
 
     def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, predict_returns: bool, **kwargs):
-        if predict_returns:
+        if not predict_returns:
             previous_prices = Y[:-1, :]
             prediction = prediction / previous_prices[-prediction.shape[0]:, :] - 1
 
@@ -39,6 +38,10 @@ class ChalvatzisTrader(Trader):
 
         self.expected_returns = expected_returns[-max_common_size:, :]
         self.realised_returns = realised_returns[-max_common_size:, :]
+
+        if self.first_target_cash:
+            self.expected_returns = self.expected_returns[:, 1:]
+            self.realised_returns = self.realised_returns[:, 1:]
 
         self.__update_bins()
 
@@ -65,13 +68,26 @@ class ChalvatzisTrader(Trader):
             np.ones((1, self.expected_returns.shape[1],)) * np.inf],
             axis=0)
 
-        for col in range(self.expected_returns.shape[1]):
-            for row in range(self.expected_returns.shape[0]):
-                exp_ret = self.expected_returns[row:, col]
-                real_ret = self.expected_returns[row:, col]
-                if exp_ret[0] >= 0:
-                    first_negative = (exp_ret < 0).argmax(axis=0)
-                    real_ret[:first_negative]
+        self.cumulative_returns: Dict[Tuple[int, int], List[float]] = {}
+        for rows in range(self.bins.shape[0] - 1):
+            for cols in range(self.bins.shape[1]):
+                self.cumulative_returns[(rows, cols)] = []
 
-                    ValueError() # TODO: continue from here
-                
+        for asset_i in range(self.expected_returns.shape[1]):
+            for date_i in range(self.expected_returns.shape[0]):
+                exp_ret = self.expected_returns[date_i:, asset_i]
+                real_ret = self.realised_returns[date_i:, asset_i]
+                if exp_ret[0] >= 0:
+                    # Calculate cumulative return
+                    first_negative = (exp_ret < 0).argmax(axis=0)
+                    if first_negative > 0:
+                        # Magic of compounding
+                        ret = np.prod(1 + real_ret[:first_negative]) - 1
+                    # Find return bucket
+                    first_out = (exp_ret[0] >= self.bins[:, asset_i]).argmin(axis=0)
+                    # Add cumulative return to return bucket
+                    self.cumulative_returns[(first_out-1, asset_i)].append(ret)
+
+        self.average_cumulative_returns: Dict[Tuple[int, int], float] = {
+            key: np.mean(value) for key, value in self.cumulative_returns.items()
+        }

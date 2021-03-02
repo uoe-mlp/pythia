@@ -21,14 +21,17 @@ class FlatPredictor(Predictor):
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         return FlatPredictor(input_size=input_size, output_size=output_size)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
         """
         Description:
             The X and Y tensors are data representative of the same day.
             Since the aim is to predict next day price, we need to lag
             the Y np.ndarray by an index (a day).
         """
-        pass
+        if self.predict_returns:
+            return Y * 0
+        else:
+            return Y * 1
         
     def predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
