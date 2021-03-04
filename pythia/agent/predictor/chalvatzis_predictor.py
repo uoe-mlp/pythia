@@ -31,8 +31,8 @@ class ChalvatzisPredictor(Predictor):
             self.normalize_min: float = normalize_min if normalize_min is not None else -1
             self.normalize_max: float = normalize_max if normalize_max is not None else 1
         self.model = LSTMChalvatzisTF(
-            input_size=input_size,  window_size=window_size, hidden_size=[hidden_size, hidden_size], output_size=self.output_size,
-            dropout=[dropout, dropout])
+            input_size=input_size, window_size=window_size, hidden_size=hidden_size, output_size=self.output_size,
+            dropout=dropout)
         self.lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=initial_learning_rate,
             decay_steps=1,
@@ -42,7 +42,6 @@ class ChalvatzisPredictor(Predictor):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         self.loss: str = loss
         self.model.compile(self.optimizer, self.loss, ['mae', MeanDirectionalAccuracy()])
-
 
     @property
     def last_hidden(self) -> bool:
@@ -116,7 +115,7 @@ class ChalvatzisPredictor(Predictor):
         Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
         obs = OutputObserver(self.model, X_train, Y_train)
-        self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val), callbacks=[obs])
+        self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=1, validation_data=(X_val, Y_val), callbacks=[obs])
         
         Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
         if self.normalize:
