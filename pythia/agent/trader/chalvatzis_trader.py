@@ -21,6 +21,7 @@ class ChalvatzisTrader(Trader):
         self.bins: np.ndarray = np.array([])
         self.quantiles: np.ndarray = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
         self.invested: np.ndarray = np.array([False for x in range(output_size - 1)])
+        self.warmup_window: int = 200
 
     @staticmethod
     def initialise(output_size: int, params: Dict) -> Trader:
@@ -35,7 +36,7 @@ class ChalvatzisTrader(Trader):
         expected_returns = prediction
         realised_returns = Y[1:, :] / Y[:-1, :] - 1
 
-        max_common_size = min([expected_returns.shape[0], realised_returns.shape[0]])
+        max_common_size = min([expected_returns.shape[0], realised_returns.shape[0]]) - self.warmup_window
 
         self.expected_returns = expected_returns[-max_common_size:, :]
         self.realised_returns = realised_returns[-max_common_size:, :]
