@@ -67,7 +67,7 @@ class ChalvatzisTrader(Trader):
 
         if any(trading_directions > 0) and self.portfolio[0] > 0:
             trading_directions[0] = -1
-        elif all(trading_directions < 0):
+        elif all(trading_directions[1:] < 0):
             trading_directions[0] = +1
 
         trades: List[TradeOrder] = []
