@@ -7,7 +7,7 @@ import tensorflow as tf
 import warnings
 
 from pythia.utils import ArgsParser
-from pythia.agent.network import LSTMChalvatzisTF, MeanDirectionalAccuracy, OutputObserver
+from pythia.agent.network import LSTMChalvatzisTF, OutputObserver
 
 from .predictor import Predictor
 
@@ -41,7 +41,7 @@ class ChalvatzisPredictor(Predictor):
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         self.loss: str = loss
-        self.model.compile(self.optimizer, self.loss, ['mae', MeanDirectionalAccuracy()])
+        self.model.compile(self.optimizer, self.loss, ['mae'])
 
     @property
     def last_hidden(self) -> bool:
