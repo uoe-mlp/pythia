@@ -114,7 +114,7 @@ class ChalvatzisPredictor(Predictor):
         X_train = tf.convert_to_tensor(X_train, dtype=tf.dtypes.float32)
         Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
-        obs = OutputObserver(self.model, X_train, Y_train)
+        obs = OutputObserver(self.model, X_train, Y_train, self.epochs)
         self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=1, validation_data=(X_val, Y_val), callbacks=[obs])
         
         Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
