@@ -82,6 +82,7 @@ class ChalvatzisPredictor(Predictor):
             initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max)
 
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+        """
         Description:
             The X and Y tensors are data representative of the same day.
             Since the aim is to predict next day price, we need to lag
