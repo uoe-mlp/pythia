@@ -73,9 +73,17 @@ class LiveDailyHistoricalMarket(DailyHistoricalMarket):
             df.rename({'Date':'date'}, axis=1, inplace=True)
             df.set_index('date', inplace=True)
             
+            prev_feature_keys = [x[6:] for x in feature_keys if x[:6] == 'Prev. ']
+            non_prev_feature_keys = [x for x in feature_keys if x[:6] != 'Prev. ']
+
             if asset in features:
-                f_df_arr.append(df[feature_keys])
-            
+                non_prev_df = df[non_prev_feature_keys]
+                prev_df = df[prev_feature_keys]
+                prev_df = pd.DataFrame(data=prev_df.values[:-1, :], index=prev_df.index[1:], columns=['Prev. %s' % (x) for x in prev_df.columns])
+                f_df = pd.concat([non_prev_df, prev_df], axis=1)
+                f_df.dropna(axis=0, inplace=True)
+                f_df_arr.append(f_df)
+
             if asset in targets:
                 t_df_arr.append(df[target_keys])
 

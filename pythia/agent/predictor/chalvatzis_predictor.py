@@ -15,9 +15,9 @@ from .predictor import Predictor
 class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
-                 epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, 
+                 epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_col_cash: bool,
                  initial_learning_rate: float, learning_rate_decay: float, loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
-        super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns)
+        super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_col_cash)
         
         self.window_size: int = window_size
         self.hidden_size: int = hidden_size
@@ -31,7 +31,7 @@ class ChalvatzisPredictor(Predictor):
             self.normalize_min: float = normalize_min if normalize_min is not None else -1
             self.normalize_max: float = normalize_max if normalize_max is not None else 1
         self.model = LSTMChalvatzisTF(
-            input_size=input_size,  window_size=window_size, hidden_size=[hidden_size, hidden_size], output_size=output_size,
+            input_size=input_size,  window_size=window_size, hidden_size=[hidden_size, hidden_size], output_size=self.output_size,
             dropout=[dropout, dropout])
         self.lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=initial_learning_rate,
@@ -42,6 +42,7 @@ class ChalvatzisPredictor(Predictor):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         self.loss: str = loss
         self.model.compile(self.optimizer, self.loss, ['mae', MeanDirectionalAccuracy()])
+
 
     @property
     def last_hidden(self) -> bool:
@@ -73,13 +74,14 @@ class ChalvatzisPredictor(Predictor):
         # all_hidden: bool = ArgsParser.get_or_default(params, 'all_hidden', True)
         all_hidden: bool = True
         predict_returns: bool = ArgsParser.get_or_default(params, 'predict_returns', False)
+        first_col_cash: bool = ArgsParser.get_or_default(params, 'first_col_cash', False)
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 5)
 
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
-            epochs=epochs, predict_returns=predict_returns, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
+            epochs=epochs, predict_returns=predict_returns, first_col_cash=first_col_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray: # Returns the Y_hat
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
         """
         Description:
             The X and Y tensors are data representative of the same day.
@@ -180,7 +182,7 @@ class ChalvatzisPredictor(Predictor):
 
         return data
 
-    def predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
+    def _inner_predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
@@ -204,7 +206,7 @@ class ChalvatzisPredictor(Predictor):
                 output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
 
-    def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+    def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
         x = X[-self.window_size:, :]
         y = Y[-self.window_size:, :]
         if self.normalize:
