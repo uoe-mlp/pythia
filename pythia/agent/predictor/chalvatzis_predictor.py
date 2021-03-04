@@ -218,4 +218,4 @@ class ChalvatzisPredictor(Predictor):
         X_train = np.array([x,] * self.iter_per_item).transpose([1,0,2,3]).reshape([x.shape[0] * self.iter_per_item] + list(x.shape[1:]))
         Y_train = np.array([y,] * self.iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.iter_per_item] + list(y.shape[1:]))
 
-        self.model.fit(X_train, Y_train, epochs=self.epochs)
+        self.model.fit(X_train, Y_train)
