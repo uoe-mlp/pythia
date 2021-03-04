@@ -21,10 +21,12 @@ class OutputObserver(tf.keras.callbacks.Callback):
             self.Y_hat[self.batch_num : self.batch_num + 1, :, :] = self.model.predict(self.X_train[self.batch_num : self.batch_num + 1, :, :])
             self.batch_num += 1
 
-    def on_epoch_end(self, epoch, logs={}):
-        if epoch == self.epochs:
+    def on_epoch_start(self, epoch, logs={}):
+        if epoch == self.epochs - 1:
             self.batch_num = 0
             self.active = True
+        else:
+            self.active = False
 
 class LSTMChalvatzisTF(object):
 
