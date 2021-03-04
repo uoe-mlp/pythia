@@ -8,18 +8,23 @@ class OutputObserver(tf.keras.callbacks.Callback):
     callback to observe the output of the network
     """
 
-    def __init__(self, model, X_train, Y_hat):
+    def __init__(self, model, X_train, Y_hat, epochs):
         self.model = model.seq_model
         self.X_train = X_train
         self.Y_hat: np.ndarray = Y_hat if isinstance(Y_hat, np.ndarray) else Y_hat.numpy()
         self.batch_num = 0
+        self.epochs = epochs
+        self.active = False
 
     def on_batch_end(self, epoch, logs={}):
-        self.Y_hat[self.batch_num : self.batch_num + 1, :, :] = self.model.predict(self.X_train[self.batch_num : self.batch_num + 1, :, :])
-        self.batch_num += 1
+        if self.active:
+            self.Y_hat[self.batch_num : self.batch_num + 1, :, :] = self.model.predict(self.X_train[self.batch_num : self.batch_num + 1, :, :])
+            self.batch_num += 1
 
     def on_epoch_end(self, epoch, logs={}):
-        self.batch_num = 0
+        if epoch == self.epochs:
+            self.batch_num = 0
+            self.active = True
 
 class LSTMChalvatzisTF(object):
 
