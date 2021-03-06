@@ -15,8 +15,8 @@
             "targets": ["SPY"],
             "trading_cost": 0.0001,
             "source": "yahoo",
-            "start_date": "01-01-2005",
-            "end_date": "20-12-2019",
+            "start_date": "01-01-2008",
+            "end_date": "20-12-2010",
             "feature_keys": ["Volume", "Open", "High", "Close"],
             "target_keys": "Adj Close"
         }
