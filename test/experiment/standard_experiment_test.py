@@ -8,6 +8,7 @@ def test_standard_analysis_three_args():
         agent=None,
         journal=None,
         settings={},
+        benchmark=None,
         params={
         'train': 30,
         'val': 20,
@@ -24,6 +25,7 @@ def test_standard_analysis_two_args():
         market=None,
         agent=None,
         journal=None,
+        benchmark=None,
         settings={},
         params={
         'train': 0.50,
@@ -38,6 +40,7 @@ def test_standard_analysis_one_args():
         market=None,
         agent=None,
         journal=None,
+        benchmark=None,
         settings={},
         params={
         'train': 0.6
@@ -52,6 +55,7 @@ def test_standard_analysis_zero_args():
         market=None,
         agent=None,
         journal=None,
+        benchmark=None,
         settings={},
         params={})
 
