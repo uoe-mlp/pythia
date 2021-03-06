@@ -56,11 +56,14 @@ class Analytics(object):
     @staticmethod
     def calculate_sharpe_ratio(timeseries: pd.Series) -> float:
         ret = Analytics.timeseries2returns(timeseries)
-        return ret.mean() / ret.std()
+        if ret.shape[0] == 0:
+            return np.NaN
+        else:
+            return ret.mean() / ret.std() if ret.std() > 0.0 else np.NaN
     
     @staticmethod
     def calculate_sortino_ratio(timeseries: pd.Series) -> float:
-        return Analytics.timeseries2returns(timeseries).mean() / Analytics.calculate_donwside_deviation(timeseries)
+        return Analytics.timeseries2returns(timeseries).mean() / Analytics.calculate_donwside_deviation(timeseries) if Analytics.calculate_donwside_deviation(timeseries) > 0.0 else np.NaN
 
     @staticmethod
     def calculate_donwside_deviation(timeseries: pd.Series) -> float:
