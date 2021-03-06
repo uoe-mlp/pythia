@@ -73,7 +73,9 @@ class Analytics(object):
 
     def to_dict(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {}
-        data['timeseries'] = self.timeseries.to_list()
+        data['timeseries'] = {
+            'values': self.timeseries.to_list(), 
+            'dates': [x.strftime('%Y-%m-%d') for x in self.timeseries.index.tolist()]}
         data['volatility'] = self.volatility
         data['cumulative_return'] = self.cumulative_return
         data['sharpe_ratio'] = self.sharpe_ratio

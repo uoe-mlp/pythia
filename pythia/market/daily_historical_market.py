@@ -14,15 +14,15 @@ from .market import Market
 
 class DailyHistoricalMarket(Market):
 
-    def __init__(self, X: np.ndarray, Y: np.ndarray, timestamps: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str]):
-        super(DailyHistoricalMarket, self).__init__(X.shape[1], Y.shape[1], timestamps)
+    def __init__(self, X: np.ndarray, Y: np.ndarray, timestamps: List[pd.Timestamp], trading_cost: float, features_paths: List[str], target_paths: List[str], instruments: List[str]):
+        super(DailyHistoricalMarket, self).__init__(X.shape[1], Y.shape[1], timestamps, instruments)
         self.X: np.ndarray= X
         self.Y: np.ndarray = Y
         self.trading_cost: float = trading_cost
         self.features_paths: List[str] = features_paths
         self.target_paths: List[str] = target_paths
-        self.input_size = self.X.shape[1]
-        self.output_size = self.Y.shape[1]
+        self.input_size: int = self.X.shape[1]
+        self.output_size: int = self.Y.shape[1]
 
     @staticmethod
     def initialise(params: Dict) -> Market:
@@ -44,11 +44,11 @@ class DailyHistoricalMarket(Market):
             t_df_tmp.drop('date', axis=1, inplace=True)
             t_df_arr.append(t_df_tmp)
 
-        X, Y, dates = DailyHistoricalMarket.combine_datasets(f_df_arr, t_df_arr)
+        X, Y, dates, target_names = DailyHistoricalMarket.combine_datasets(f_df_arr, t_df_arr)
 
         trading_cost: float = ArgsParser.get_or_default(params, 'trading_cost', 1e-3)
 
-        return DailyHistoricalMarket(X, Y, dates, trading_cost, features, targets)
+        return DailyHistoricalMarket(X, Y, dates, trading_cost, features, targets, target_names)
 
     def execute(self, trades: List[TradeOrder], timestamp: Timestamp) -> List[TradeFill]:
         # We do not know market impact, the only way to know it is to simulate
@@ -95,11 +95,12 @@ class DailyHistoricalMarket(Market):
         return fills
 
     @staticmethod
-    def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[np.ndarray, np.ndarray, List[pd.Timestamp]]:
+    def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[np.ndarray, np.ndarray, List[pd.Timestamp], List[str]]:
         targets_df = reduce(lambda left,right: pd.merge(left,right,on='date'), targets)
         targets_df.sort_index(inplace=True)
         targets_df.bfill(inplace=True)
-        targets_df = pd.concat([pd.Series([1 for x in targets_df.index.tolist()], index=targets_df.index.tolist()), targets_df], axis=1)
+        targets_df = pd.concat([pd.Series([1 for x in targets_df.index.tolist()], index=targets_df.index.tolist(), name='cash'), targets_df], axis=1)
+        names = [str(x) for x in targets_df.columns.to_list()]
         targets_df.columns = [i for i in range(targets_df.shape[1])]
 
         for i, feature in enumerate(features):
@@ -111,4 +112,4 @@ class DailyHistoricalMarket(Market):
         features_df = features_df.dropna()
         targets_df = targets_df.loc[features_df.index, :]
 
-        return (np.array(features_df.values), np.array(targets_df.values), [pd.Timestamp(x) for x in targets_df.index])
+        return (np.array(features_df.values), np.array(targets_df.values), [pd.Timestamp(x) for x in targets_df.index], names)
