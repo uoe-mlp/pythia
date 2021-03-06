@@ -66,7 +66,7 @@ class Journal(object):
 
     def export_settings(self, settings: Dict):
         s = copy.deepcopy(settings)
-        s['code_hash'] = os.system('git rev-parse HEAD')
+        s['code_hash'] = os.popen('git rev-parse HEAD').read().replace('/n', '')
         s['timestamp_started'] = self.started_at.isoformat()
         s['timestamp_finished'] = datetime.now().isoformat()
 
