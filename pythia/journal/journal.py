@@ -48,7 +48,7 @@ class Journal(object):
         if not os.path.isdir(self.experiment_folder):
             os.mkdir(self.experiment_folder)
 
-        timestamp_folder = os.path.join(self.experiment_folder, self.timestamp)
+        timestamp_folder = os.path.join(self.experiment_folder, 'results__' + self.timestamp)
         if not os.path.isdir(timestamp_folder):
             os.mkdir(timestamp_folder)
 
@@ -73,7 +73,7 @@ class Journal(object):
         if not os.path.isdir(self.experiment_folder):
             os.mkdir(self.experiment_folder)
 
-        timestamp_folder = os.path.join(self.experiment_folder, self.timestamp)
+        timestamp_folder = os.path.join(self.experiment_folder, 'results__' + self.timestamp)
         if not os.path.isdir(timestamp_folder):
             os.mkdir(timestamp_folder)
 
