@@ -22,6 +22,7 @@ class ExperimentParser(object):
 
         market = ArgsParser.get_or_error(data, 'market')
         agent = ArgsParser.get_or_error(data, 'agent')
+        benchmark = ArgsParser.get_or_default(data, 'benchmark', {})
         analysis = ArgsParser.get_or_error(data, 'analysis')
 
         # ---- MARKET -----
@@ -44,6 +45,18 @@ class ExperimentParser(object):
         else:
             raise ValueError('Unexpected value for agent_type: %s' % (agent_type))
         
+        # ---- BENCHMARK -----
+        if benchmark == {}:
+            calc_benchmark = False
+        else:
+            calc_benchmark = True
+            benchmark_type = ArgsParser.get_or_default(benchmark, 'type', 'supervised')
+
+            if benchmark_type.lower() == 'supervised':
+                benchmark_obj = SupervisedAgent.initialise(input_size, output_size, cast(Dict, ArgsParser.get_or_default(benchmark, 'params', {})))
+            else:
+                raise ValueError('Unexpected value for agent_type: %s' % (agent_type))
+
         # ---- ANALYSIS -----
         experiment_type = ArgsParser.get_or_default(analysis, 'type', 'standard')
         experiment_folder = ArgsParser.get_or_default(analysis, 'folder', os.path.join('data', 'experiments', 'default'))
@@ -55,6 +68,7 @@ class ExperimentParser(object):
                 agent=agent_obj,
                 journal=Journal(experiment_folder=experiment_folder),
                 settings=data,
+                benchmark=benchmark if calc_benchmark else None,
                 params=cast(Dict, ArgsParser.get_or_default(analysis, 'params', {}))
             )
         else:

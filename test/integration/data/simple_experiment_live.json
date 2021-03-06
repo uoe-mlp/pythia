@@ -38,5 +38,16 @@
                 "type": "naive"
             }
         }
+    },
+    "benchmark": {
+        "type": "supervised",
+        "params": {
+            "predictor": {
+                "type": "flat"
+            },
+            "trader": {
+                "type": "buy_and_hold"
+            }
+        }
     }
 }
