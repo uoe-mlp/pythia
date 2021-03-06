@@ -7,6 +7,7 @@ def test_standard_analysis_three_args():
         market=None,
         agent=None,
         journal=None,
+        settings={},
         params={
         'train': 30,
         'val': 20,
@@ -23,6 +24,7 @@ def test_standard_analysis_two_args():
         market=None,
         agent=None,
         journal=None,
+        settings={},
         params={
         'train': 0.50,
         'val': 0.12
@@ -36,6 +38,7 @@ def test_standard_analysis_one_args():
         market=None,
         agent=None,
         journal=None,
+        settings={},
         params={
         'train': 0.6
     })
@@ -49,6 +52,7 @@ def test_standard_analysis_zero_args():
         market=None,
         agent=None,
         journal=None,
+        settings={},
         params={})
 
     assert analysis.test == 0.15

@@ -15,14 +15,14 @@ class StandardExperiment(Experiment):
 
     DEFAULT_SPLIT: List[float] = [0.7, 0.15, 0.15]
 
-    def __init__(self, path: str, market: Market, agent: Agent, journal: Journal, train: float, val: float, test: float):
-        super(StandardExperiment, self).__init__(path, market, agent, journal)
+    def __init__(self, path: str, market: Market, agent: Agent, journal: Journal, settings: Dict, train: float, val: float, test: float):
+        super(StandardExperiment, self).__init__(path, market, agent, journal, settings)
         self.train: float = train
         self.val: float = val
         self.test: float = test
 
     @staticmethod
-    def initialise(path: str, market: Market, agent: Agent, journal: Journal, params: Dict=None) -> Experiment:
+    def initialise(path: str, market: Market, agent: Agent, journal: Journal, settings: Dict, params: Dict=None) -> Experiment:
         train: Optional[float] = ArgsParser.get_or_default(params if params is not None else {}, 'train', None)
         val: Optional[float] = ArgsParser.get_or_default(params if params is not None else {}, 'val', None)
         test: Optional[float] = ArgsParser.get_or_default(params if params is not None else {}, 'test', None)
@@ -45,7 +45,7 @@ class StandardExperiment(Experiment):
             # If all available, just use them. Had to use cast here cause linter could not pick the logic up. 
             clean_fractions = cast(List[float], fractions) 
 
-        return StandardExperiment(path, market, agent, journal, train=clean_fractions[0], val=clean_fractions[1], test=clean_fractions[2])
+        return StandardExperiment(path, market, agent, journal, settings, train=clean_fractions[0], val=clean_fractions[1], test=clean_fractions[2])
 
     def run(self):
         X = self.market.X
@@ -76,7 +76,7 @@ class StandardExperiment(Experiment):
             self.journal.store_fill(trade_fills)
             self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
 
-        self.journal.run_analytics('validation', self.market.timestamps[train_num:train_num + val_num], Y_val)
+        self.journal.run_analytics('validation', self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
         self.journal.clean()
         self.agent.clean_portfolio()
         
@@ -89,4 +89,5 @@ class StandardExperiment(Experiment):
             self.journal.store_fill(trade_fills)
             self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
         
-        self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test)
+        self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test, self.market.instruments)
+        self.journal.export_settings(self.settings)

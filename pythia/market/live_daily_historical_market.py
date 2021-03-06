@@ -17,10 +17,12 @@ from .daily_historical_market import DailyHistoricalMarket
 class LiveDailyHistoricalMarket(DailyHistoricalMarket):
 
     def __init__(self, X: np.ndarray, Y: np.ndarray, timestamps: List[pd.Timestamp], trading_cost: float, features: List[str], targets: List[str],
-        download_timestamp: Timestamp, source: str, start_date: Timestamp, end_date: Timestamp, feature_keys: List[str], target_keys: List[str]):
+        download_timestamp: Timestamp, source: str, start_date: Timestamp, end_date: Timestamp, feature_keys: List[str], target_keys: List[str],
+        instruments: List[str]):
         super(LiveDailyHistoricalMarket, self).__init__(X=X, Y=Y, timestamps=timestamps, trading_cost=trading_cost, 
             features_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in features], 
-            target_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in targets])
+            target_paths=[os.path.join('data', 'markets', source.lower(), '%s_%s_%s.csv' % (x.lower(), start_date.strftime('%Y%m%d'), end_date.strftime('%Y%m%d'))) for x in targets],
+            instruments=instruments)
         self.download_timestamp: Timestamp = download_timestamp
         self.assets: List[str] = sorted(list(set(features + targets)))
         self.features: List[str] = features
@@ -85,10 +87,15 @@ class LiveDailyHistoricalMarket(DailyHistoricalMarket):
                 f_df_arr.append(f_df)
 
             if asset in targets:
-                t_df_arr.append(df[target_keys])
+                tmp = df[target_keys]
+                if tmp.shape[1] > 1:
+                    tmp.columns = [x + asset for x in tmp.columns]
+                else:
+                    tmp.columns = [asset]
+                t_df_arr.append(tmp)
 
-        X, Y, dates = DailyHistoricalMarket.combine_datasets(f_df_arr, t_df_arr)
+        X, Y, dates, target_names = DailyHistoricalMarket.combine_datasets(f_df_arr, t_df_arr)
 
         trading_cost: float = ArgsParser.get_or_default(params, 'trading_cost', 1e-3)     
 
-        return LiveDailyHistoricalMarket(X, Y, dates, trading_cost, features, targets, Timestamp.now(), source, start_date, end_date, feature_keys, target_keys)
+        return LiveDailyHistoricalMarket(X, Y, dates, trading_cost, features, targets, Timestamp.now(), source, start_date, end_date, feature_keys, target_keys, target_names)

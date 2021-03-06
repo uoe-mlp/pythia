@@ -1,7 +1,7 @@
 {
     "analysis": {
         "type": "standard",
-        "folder": "test/.tmp",
+        "folder": "data/experiments/chalvatzis_short",
         "params": {
             "train": 0.200,
             "val": 0.134,
@@ -15,9 +15,9 @@
             "targets": ["SPY"],
             "trading_cost": 0.0001,
             "source": "yahoo",
-            "start_date": "01-01-2008",
-            "end_date": "20-12-2010",
-            "feature_keys": ["Volume", "Open", "High", "Close"],
+            "start_date": "01-01-2005",
+            "end_date": "20-12-2019",
+            "feature_keys": ["Open", "High", "Low", "Close", "Adj Close", "Prev. Adj Close"],
             "target_keys": "Adj Close"
         }
     },
@@ -28,14 +28,14 @@
                 "type": "chalvatzis",
                 "params": {
                     "first_column_cash": true,
-                    "initial_learning_rate": 0.01, 
-                    "learning_rate_decay": 0.999999,
-                    "epochs": 2,
+                    "initial_learning_rate": 1e-4, 
+                    "learning_rate_decay": 1,
+                    "epochs": 10,
                     "iter_per_item": 3,
                     "predict_returns": false,
-                    "window_size": 22,
+                    "window_size": 11,
                     "dropout": 0.5,
-                    "hidden_size": 64,
+                    "hidden_size": [128, 128, 128],
                     "normalize": {
                         "active": true,
                         "min": -1,

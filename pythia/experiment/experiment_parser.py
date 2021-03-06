@@ -18,7 +18,7 @@ class ExperimentParser(object):
     @staticmethod
     def parse(path) -> Experiment:
         with open(path, 'r') as fp:
-            data = json.load(fp)
+            data: Dict = json.load(fp)
 
         market = ArgsParser.get_or_error(data, 'market')
         agent = ArgsParser.get_or_error(data, 'agent')
@@ -54,6 +54,7 @@ class ExperimentParser(object):
                 market=market_obj,
                 agent=agent_obj,
                 journal=Journal(experiment_folder=experiment_folder),
+                settings=data,
                 params=cast(Dict, ArgsParser.get_or_default(analysis, 'params', {}))
             )
         else:

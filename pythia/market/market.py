@@ -9,10 +9,11 @@ from pythia.journal import TradeFill
 
 class Market(ABC):
 
-    def __init__(self, input_size: int, output_size: int, timestamps: List[Timestamp]):
+    def __init__(self, input_size: int, output_size: int, timestamps: List[Timestamp], instruments: List[str]):
         self.input_size: int = input_size
         self.output_size: int = output_size
         self.timestamps: List[Timestamp] = timestamps
+        self.instruments: List[str] = instruments
 
     @staticmethod
     def initialise(params: Dict) -> Market: pass
