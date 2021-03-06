@@ -111,7 +111,7 @@ class ChalvatzisTrader(Trader):
                     self.cumulative_returns[(first_out-1, asset_i)].append(ret)
 
         self.average_cumulative_returns: Dict[Tuple[int, int], float] = {
-            key: np.mean(value) for key, value in self.cumulative_returns.items()
+            key: np.mean(value) if len(value) > 0 else 0.0 for key, value in self.cumulative_returns.items()
         }
 
     def update_policy(self, X: np.ndarray, Y: np.ndarray, prediction: np.ndarray, conviction: np.ndarray, predict_returns: bool) -> None:
