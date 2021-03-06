@@ -13,3 +13,17 @@ Times series deep learning model for trading.
 # LaTeX Docs
 
 Please find our LaTeX documentation [here](https://www.overleaf.com/read/qnywndwmwzqp)
+
+# Execution
+
+In order to run an experiment, run the following command in the terminal:
+
+```
+python pythia --run [SETTINGS_FILE]
+```
+
+For example:
+
+```
+python pythia --run data/experiments/chalvatzis/settings.json
+```

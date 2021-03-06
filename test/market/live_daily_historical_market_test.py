@@ -12,14 +12,14 @@ def test_live_daily_historical_market_setup():
         "source": "yahoo",
         "start_date": "01-01-2005",
         "end_date": "05-01-2018",
-        "feature_keys": ["Volume", "Close"],
+        "feature_keys": ["Volume", "Close", "Prev. Close"],
         "target_keys": "Close",
     }
 
     market = LiveDailyHistoricalMarket.initialise(params)
     
     assert market.trading_cost == 1e-4
-    assert market.X.shape == (3355, 8)
-    assert market.Y.shape == (3355, 5)
-    assert market.input_size == 8
+    assert market.X.shape == (3354, 12)
+    assert market.Y.shape == (3354, 5)
+    assert market.input_size == 12
     assert market.output_size == 5

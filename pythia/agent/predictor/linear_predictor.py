@@ -15,7 +15,7 @@ from .predictor import Predictor
 class LinearPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, learning_rate: float, weight_decay: float, epochs: int, predict_returns: bool):
-        super(LinearPredictor, self).__init__(input_size, output_size, predict_returns)
+        super(LinearPredictor, self).__init__(input_size, output_size, predict_returns, first_col_cash=False)
         self.learning_rate: float = learning_rate
         self.weight_decay: float = weight_decay
         self.model: LinearRegression = LinearRegression(input_size, output_size)
@@ -33,7 +33,7 @@ class LinearPredictor(Predictor):
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 1)
         return LinearPredictor(input_size=input_size, output_size=output_size, window_size=window_size, learning_rate=learning_rate, weight_decay=weight_decay, epochs=epochs, predict_returns=predict_returns)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
         """
         Description:
             The X and Y tensors are data representative of the same day.
@@ -54,6 +54,8 @@ class LinearPredictor(Predictor):
             loss.backward()
             self.optimizer.step()
         
+        return self.model(Tensor(X_tensor)).detach().numpy()
+        
     def __reshape_window(self, X: Tensor, Y: Optional[Tensor]):
         if Y is not None:
             Y = Y[self.window_size-1:,:]
@@ -63,19 +65,25 @@ class LinearPredictor(Predictor):
             X_new[i] = flatten(X[i:self.window_size+i])
         return X_new, Y
 
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _inner_predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
-        X = X[-self.window_size:, :]
-        X_tensor = Tensor(X)
-        X_tensor, _ = self.__reshape_window(X_tensor, None)
+        if all_history:
+            X_tensor = Tensor(X)
+            X_tensor, _ = self.__reshape_window(X_tensor, None)
+            output = self.model(Tensor(X))
+            return output.detach().numpy(), output.detach().numpy() * 1
+        else:
+            X = X[-self.window_size:, :]
+            X_tensor = Tensor(X)
+            X_tensor, _ = self.__reshape_window(X_tensor, None)
 
-        output = self.model(Tensor(X)[-1, :]).detach().numpy()
-        return output, output * 1
+            output = self.model(Tensor(X)[-1, :]).detach().numpy()
+            return output, output * 1
 
-    def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+    def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
         X = X[-self.window_size:, :]
         Y = Y[-self.window_size-1:, :]
         Y = self.prepare_prices(Y)

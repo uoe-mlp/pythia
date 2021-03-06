@@ -41,7 +41,7 @@ def test_sequence_creation_two_dim():
 
 def test_fit_and_predict():
     np.random.seed(12345)
-    cp = ChalvatzisPredictor.initialise(input_size=2, output_size=2,
+    cp = ChalvatzisPredictor.initialise(input_size=1, output_size=1,
                                         params=dict(window_size=3, hidden_size=64, epochs=1, predict_returns=False, shuffle=False, dropout=0.5, all_hidden=False))
 
     df = pd.read_csv(os.path.join('test','agent','network','data','chalvatzis_tf.csv'))
@@ -53,12 +53,12 @@ def test_fit_and_predict():
 
     Y_test = cp.predict(X[:-4,:])
 
-    assert Y_test[0].shape == (2,)
+    assert Y_test[0].shape == (1,)
 
 
 def test_normalization():
     np.random.seed(12345)
-    cp = ChalvatzisPredictor.initialise(input_size=2, output_size=2,
+    cp = ChalvatzisPredictor.initialise(input_size=2, output_size=1,
                                         params=dict(window_size=3, hidden_size=64, epochs=1, predict_returns=False, shuffle=False, dropout=0.5, all_hidden=False, normalize={'active': True, 'min': -3}))
 
     assert cp.normalize_min == -3
@@ -67,12 +67,12 @@ def test_normalization():
     X_train = np.array([[0.0, 1.5], [1.0, 1.5], [2.0, 1.5], [3.0, 1.5], [4.0, 1], [5.0, 1], [6.0, 1], [7.0, 1], [8.0, 1], [9.0, 1], [10.0, 1], [0.0, 1.5]])    
     y_train = np.array([[0.0], [0.0], [2.0], [4.0], [6.0], [8.0], [10.0], [12.0], [14.0], [16.0], [18.0], [20.0]])
 
-    cp._ChalvatzisPredictor__normalize_fit(X_train)
+    cp._ChalvatzisPredictor__normalize_fit(X_train, y_train)
 
-    np.testing.assert_equal(cp._normalize_fitted_min, np.array([0., 1.]))
-    np.testing.assert_equal(cp._normalize_fitted_max, np.array([10., 1.5]))
+    np.testing.assert_equal(cp._normalize_fitted_min_feature, np.array([0., 1.]))
+    np.testing.assert_equal(cp._normalize_fitted_max_feature, np.array([10., 1.5]))
 
-    X_normalized = cp._ChalvatzisPredictor__normalize_apply(X_train)
+    X_normalized = cp._ChalvatzisPredictor__normalize_apply_features(X_train)
 
     assert X_normalized[0,0] == -3
     assert X_normalized[0,1] == 1
@@ -85,7 +85,7 @@ def test_normalization():
 
 def test_fit_and_predict_shuffle_smoke():
     np.random.seed(12345)
-    cp = ChalvatzisPredictor.initialise(input_size=2, output_size=2,
+    cp = ChalvatzisPredictor.initialise(input_size=1, output_size=1,
                                         params=dict(window_size=3, shuffle=True, hidden_size=64, epochs=1, predict_returns=False, dropout=0.5, all_hidden=False))
 
     df = pd.read_csv(os.path.join('test','agent','network','data','chalvatzis_tf.csv'))
@@ -97,12 +97,12 @@ def test_fit_and_predict_shuffle_smoke():
 
     Y_test = cp.predict(X[:-4,:])
 
-    assert Y_test[0].shape == (2,)
+    assert Y_test[0].shape == (1,)
 
 def test_fit_and_predict_multiple_iter():
     np.random.seed(12345)
-    cp = ChalvatzisPredictor.initialise(input_size=2, output_size=2,
-                                        params=dict(window_size=5, shuffle=True, iter_per_item=10, hidden_size=64, epochs=1, predict_returns=False, dropout=0.5, all_hidden=False))
+    cp = ChalvatzisPredictor.initialise(input_size=3, output_size=2,
+                                        params=dict(window_size=5, shuffle=True, iter_per_item=2, hidden_size=64, epochs=1, predict_returns=False, dropout=0.5, all_hidden=False))
 
     df = pd.read_csv(os.path.join('test','agent','network','data','chalvatzis_tf.csv'))
 
@@ -111,4 +111,5 @@ def test_fit_and_predict_multiple_iter():
 
     cp.fit(X[:-20,:], Y[:-20,:], X[-20:-10,:], Y[-20:-10,:])
 
-    assert True
+    predictions, convictions = cp.predict(X, all_history=True)
+    assert predictions.shape == (X.shape[0] - cp.window_size + 1, Y.shape[1])

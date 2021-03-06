@@ -11,7 +11,7 @@ dependencies:
   - seaborn
   - matplotlib
   - pip
-  - tensorflow
   - pip:
     - torchvision
     - pandas_datareader
+    - tensorflow

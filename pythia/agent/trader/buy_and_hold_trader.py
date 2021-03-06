@@ -20,9 +20,6 @@ class BuyAndHoldTrader(Trader):
     def initialise(output_size: int, params: Dict) -> Trader:
         return BuyAndHoldTrader(output_size)
 
-    def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, **kwargs):
-        pass
-
     def act(self, prediction: np.ndarray, conviction: np.ndarray, timestamp: Timestamp, prices: np.ndarray, predict_returns: bool) -> List[TradeOrder]:
         # Implicitly checking if we are in the first period
         trades: List[TradeOrder] = []

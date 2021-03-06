@@ -2,10 +2,12 @@ from __future__ import annotations
 from typing import Dict, Tuple, Dict, List, Any, Optional, Callable
 from abc import ABC, abstractclassmethod
 import numpy as np
+from numpy.core.arrayprint import dtype_is_implied
 import tensorflow as tf
+import warnings
 
 from pythia.utils import ArgsParser
-from pythia.agent.network import LSTMChalvatzisTF
+from pythia.agent.network import LSTMChalvatzisTF, OutputObserver
 
 from .predictor import Predictor
 
@@ -13,9 +15,9 @@ from .predictor import Predictor
 class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
-                 epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, 
+                 epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_col_cash: bool,
                  initial_learning_rate: float, learning_rate_decay: float, loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
-        super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns)
+        super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_col_cash)
         
         self.window_size: int = window_size
         self.hidden_size: int = hidden_size
@@ -29,8 +31,8 @@ class ChalvatzisPredictor(Predictor):
             self.normalize_min: float = normalize_min if normalize_min is not None else -1
             self.normalize_max: float = normalize_max if normalize_max is not None else 1
         self.model = LSTMChalvatzisTF(
-            input_size=input_size,  window_size=window_size, hidden_size=[hidden_size, hidden_size], output_size=output_size,
-            dropout=[dropout, dropout])
+            input_size=input_size, window_size=window_size, hidden_size=hidden_size, output_size=self.output_size,
+            dropout=dropout)
         self.lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=initial_learning_rate,
             decay_steps=1,
@@ -40,7 +42,6 @@ class ChalvatzisPredictor(Predictor):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         self.loss: str = loss
         self.model.compile(self.optimizer, self.loss, ['mae'])
-
 
     @property
     def last_hidden(self) -> bool:
@@ -72,19 +73,21 @@ class ChalvatzisPredictor(Predictor):
         # all_hidden: bool = ArgsParser.get_or_default(params, 'all_hidden', True)
         all_hidden: bool = True
         predict_returns: bool = ArgsParser.get_or_default(params, 'predict_returns', False)
+        first_col_cash: bool = ArgsParser.get_or_default(params, 'first_col_cash', False)
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 5)
 
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
-            epochs=epochs, predict_returns=predict_returns, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
+            epochs=epochs, predict_returns=predict_returns, first_col_cash=first_col_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
         """
         Description:
             The X and Y tensors are data representative of the same day.
             Since the aim is to predict next day price, we need to lag
             the Y np.ndarray by an index (a day).
         """
+        Y_in = Y.copy()
         splits = [X.shape[0]]
         if X_val is not None and Y_val is not None:
             splits.append(X.shape[0] + X_val.shape[0])
@@ -95,29 +98,55 @@ class ChalvatzisPredictor(Predictor):
         Y = self.prepare_prices(Y)
         
         if self.normalize:
-            self.__normalize_fit(X)
+            self.__normalize_fit(X, Y)
+            X = self.__normalize_apply_features(X)
+            Y = self.__normalize_apply_targets(Y)
 
-        if self.normalize:
-            X = self.__normalize_apply(X)
         data = self.__create_sequences(X, Y, splits)
         X_train, Y_train = data[0]
         if X_val is not None and Y_val is not None:
             X_val, Y_val = data[1]
         else:
             X_val, Y_val = X_train, Y_train
-
-        # Reshaping X and Y to have multiple iterations per item
+        
         X_train = np.array([X_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([X_train.shape[0] * self.iter_per_item] + list(X_train.shape[1:]))
         Y_train = np.array([Y_train,] * self.iter_per_item).transpose([1,0,2,3]).reshape([Y_train.shape[0] * self.iter_per_item] + list(Y_train.shape[1:]))
+        X_train = tf.convert_to_tensor(X_train, dtype=tf.dtypes.float32)
+        Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
+        
+        obs = OutputObserver(self.model, X_train, Y_train, self.epochs)
+        self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=1, validation_data=(X_val, Y_val), callbacks=[obs])
+        
+        Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
+        if self.normalize:
+            Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
+        return Y_hat
 
-        self.model.fit(X_train, Y_train, epochs=self.epochs, validation_data=(X_val, Y_val))
+    def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
+        self._normalize_fitted_min_feature: np.ndarray = X.min(axis=0)
+        self._normalize_fitted_max_feature: np.ndarray = X.max(axis=0)
+        
+        # Handling the case where min == max, where the denominator in the normalisation would be 0
+        eq = self._normalize_fitted_min_feature == self._normalize_fitted_max_feature
+        self._normalize_fitted_min_feature[eq] -=0.5
+        self._normalize_fitted_max_feature[eq] +=0.5
 
-    def __normalize_fit(self, X: np.ndarray) -> None:
-        self._normalize_fitted_min: float = X.min(axis=0)
-        self._normalize_fitted_max: float = X.max(axis=0)
+        self._normalize_fitted_min_target: np.ndarray = Y.min(axis=0)
+        self._normalize_fitted_max_target: np.ndarray = Y.max(axis=0)
 
-    def __normalize_apply(self, X: np.ndarray) -> np.ndarray:
-        return (X - self._normalize_fitted_min) / (self._normalize_fitted_max - self._normalize_fitted_min) * (self.normalize_max - self.normalize_min) + self.normalize_min
+        # Handling the case where min == max, where the denominator in the normalisation would be 0
+        eq = self._normalize_fitted_min_target == self._normalize_fitted_max_target
+        self._normalize_fitted_min_target[eq] -=0.5
+        self._normalize_fitted_max_target[eq] +=0.5
+
+    def __normalize_apply_features(self, X: np.ndarray) -> np.ndarray:
+        return (X - self._normalize_fitted_min_feature) / (self._normalize_fitted_max_feature - self._normalize_fitted_min_feature) * (self.normalize_max - self.normalize_min) + self.normalize_min
+
+    def __normalize_apply_targets(self, Y: np.ndarray, revert: bool=False) -> np.ndarray:
+        if revert:
+            return (Y - self.normalize_min) / (self.normalize_max - self.normalize_min) * (self._normalize_fitted_max_target - self._normalize_fitted_min_target) + self._normalize_fitted_min_target
+        else:
+            return (Y - self._normalize_fitted_min_target) / (self._normalize_fitted_max_target - self._normalize_fitted_min_target) * (self.normalize_max - self.normalize_min) + self.normalize_min
 
     def __create_sequences(self, X: np.ndarray, Y: np.ndarray, splits: List[int]=[]) -> List[Tuple[np.ndarray, np.ndarray]]:
         """Args:
@@ -152,26 +181,40 @@ class ChalvatzisPredictor(Predictor):
 
         return data
 
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _inner_predict(self, X: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns:
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
-        x = X[-self.window_size:, :]
-        if self.normalize:
-            x = self.__normalize_apply(x)
-        output = self.model.predict(np.array([x]))[0,-1,:]
-        return output, np.abs(output)
+        if all_history:
+            if self.normalize:
+                X = self.__normalize_apply_features(X)
+            data = self.__create_sequences(X, X, [X.shape[0]])
+            X, _ = data[0]
 
-    def update(self, X: np.ndarray, Y: np.ndarray) -> None:
+            output = self.model.predict(X)[:,-1,:]
+            if self.normalize:
+                output = self.__normalize_apply_targets(output, revert=True)
+            return output, np.abs(output)
+        else:
+            x = X[-self.window_size:, :]
+            if self.normalize:
+                x = self.__normalize_apply_features(x)
+            output = self.model.predict(np.array([x]))[0,-1,:]
+            if self.normalize:
+                output = self.__normalize_apply_targets(output, revert=True)
+            return output, np.abs(output)
+
+    def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
         x = X[-self.window_size:, :]
         y = Y[-self.window_size:, :]
         if self.normalize:
-            x = self.__normalize_apply(x)
+            x = self.__normalize_apply_features(x)
+            y = self.__normalize_apply_targets(y)
         data = self.__create_sequences(x, y, [self.window_size])
         x, y = data[0]
         
         X_train = np.array([x,] * self.iter_per_item).transpose([1,0,2,3]).reshape([x.shape[0] * self.iter_per_item] + list(x.shape[1:]))
         Y_train = np.array([y,] * self.iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.iter_per_item] + list(y.shape[1:]))
 
-        self.model.fit(X_train, Y_train, epochs=self.epochs)
+        self.model.fit(X_train, Y_train, batch_size=1)

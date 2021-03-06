@@ -20,9 +20,6 @@ class NaiveTrader(Trader):
     def initialise(output_size: int, params: Dict) -> Trader:
         return NaiveTrader(output_size)
 
-    def fit(self, prediction: np.ndarray, conviction: np.ndarray, Y: np.ndarray, **kwargs):
-        pass
-
     def act(self, prediction: np.ndarray, conviction: np.ndarray, timestamp: Timestamp, prices: np.ndarray, predict_returns: bool) -> List[TradeOrder]:
         if predict_returns:
             target_trade = int(np.argmax(prediction))

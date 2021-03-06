@@ -1,9 +1,34 @@
-from typing import List, Tuple, Union, Optional
-import tensorflow as tf 
+from typing import List, Union, Optional, Callable
+import tensorflow as tf
 import numpy as np
 
 
-class LSTMChalvatzisTF(tf.keras.Model):
+class OutputObserver(tf.keras.callbacks.Callback):
+    """"
+    callback to observe the output of the network
+    """
+
+    def __init__(self, model, X_train, Y_hat, epochs):
+        self.model = model.seq_model
+        self.X_train = X_train
+        self.Y_hat: np.ndarray = Y_hat if isinstance(Y_hat, np.ndarray) else Y_hat.numpy()
+        self.batch_num = 0
+        self.epochs = epochs
+        self.active = False
+
+    def on_batch_end(self, epoch, logs={}):
+        if self.active:
+            self.Y_hat[self.batch_num : self.batch_num + 1, :, :] = self.model.predict(self.X_train[self.batch_num : self.batch_num + 1, :, :])
+            self.batch_num += 1
+
+    def on_epoch_start(self, epoch, logs={}):
+        if epoch == self.epochs - 1:
+            self.batch_num = 0
+            self.active = True
+        else:
+            self.active = False
+
+class LSTMChalvatzisTF(object):
 
     def __init__(self, input_size: int, window_size: int, hidden_size: Union[int, List[int]], output_size: int, dropout: Union[float, List[float]]):
         super(LSTMChalvatzisTF, self).__init__()
@@ -17,28 +42,58 @@ class LSTMChalvatzisTF(tf.keras.Model):
         self.window_size: int = window_size
         self.output_size: int = output_size
 
-        self.input_block: tf.keras.layers.InputLayer = tf.keras.layers.InputLayer(input_shape=(window_size,input_size))
-        self.lstm_blocks: List[tf.keras.Layer] = []
-        for hs, d in zip(hidden_size_list, dropout_list):
-            self.lstm_blocks.append(tf.keras.layers.LSTM(
-                units=hs, 
-                activation='relu',
-                use_bias=True,
-                return_sequences=True,
-                kernel_initializer='glorot_uniform',
-                dropout=d,
-                recurrent_dropout=0,
-                input_shape=(window_size,input_size)))
+        self.seq_model = tf.keras.Sequential()
+        self.seq_model.add(
+            tf.keras.layers.InputLayer(input_shape=(window_size, input_size))
+        )
+        for i, (hs, d) in enumerate(zip(hidden_size_list, dropout_list)):
+            if i == 0:
+                self.seq_model.add(tf.keras.layers.LSTM(
+                    units=hs, 
+                    activation='relu',
+                    use_bias=True,
+                    return_sequences=True,
+                    kernel_initializer='glorot_uniform',
+                    dropout=d,
+                    recurrent_dropout=0,
+                    input_shape=(window_size,input_size)))
+            else:
+                self.seq_model.add(tf.keras.layers.LSTM(
+                    units=hs, 
+                    activation='relu',
+                    use_bias=True,
+                    return_sequences=True,
+                    kernel_initializer='glorot_uniform',
+                    dropout=d,
+                    recurrent_dropout=0,
+                    input_shape=(window_size, hidden_size_list[i-1])))
 
-        self.flatten_block: tf.keras.layers.Flatten = tf.keras.layers.Flatten()
-        self.dense_block: tf.keras.layers.Dense = tf.keras.layers.Dense(output_size * window_size)
-        self.reshape_block: tf.keras.layers.Reshape = tf.keras.layers.Reshape((window_size, output_size))
+        self.seq_model.add(tf.keras.layers.Flatten(
+                input_shape=(window_size, hidden_size_list[-1])))
+        self.seq_model.add(tf.keras.layers.Dense(output_size * window_size, 
+                input_shape=(input_size * hidden_size_list[-1],)))
+        self.seq_model.add(
+            tf.keras.layers.Reshape((window_size, output_size),
+                input_shape=(output_size * window_size, 1,))
+        )
         
     def call(self, inputs):
-        x = self.input_block(inputs)
-        for lstm_block in self.lstm_blocks:
-            x = lstm_block(x)
-        x = self.flatten_block(x)
-        x = self.dense_block(x)
-        x = self.reshape_block(x)
-        return x
+        return self.seq_model.call(inputs)
+    
+    def compile(self, *args, **kwargs):
+        return self.seq_model.compile(*args, **kwargs)
+
+    def fit(self, *args, **kwargs):
+        return self.seq_model.fit(*args, **kwargs)
+
+    def predict(self, *args, **kwargs):
+        return self.seq_model.predict(*args, **kwargs)
+
+    def build(self, *args, **kwargs):
+        return self.seq_model.build(*args, **kwargs)
+
+    def summary(self, *args, **kwargs):
+        return self.seq_model.summary(*args, **kwargs)
+
+    def evaluate(self, *args, **kwargs):
+        return self.seq_model.evaluate(*args, **kwargs)

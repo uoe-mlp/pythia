@@ -100,11 +100,15 @@ class DailyHistoricalMarket(Market):
         targets_df.sort_index(inplace=True)
         targets_df.bfill(inplace=True)
         targets_df = pd.concat([pd.Series([1 for x in targets_df.index.tolist()], index=targets_df.index.tolist()), targets_df], axis=1)
+        targets_df.columns = [i for i in range(targets_df.shape[1])]
 
-        for feature in features:
+        for i, feature in enumerate(features):
             feature = feature.reindex(targets_df.index)
-            feature.ffill(inplace=True)
+            feature.index.name = 'date'
+            features[i] = feature.ffill()
 
         features_df = reduce(lambda left,right: pd.merge(left,right,on='date'), features)
+        features_df = features_df.dropna()
+        targets_df = targets_df.loc[features_df.index, :]
 
         return (np.array(features_df.values), np.array(targets_df.values), [pd.Timestamp(x) for x in targets_df.index])
