@@ -68,7 +68,7 @@ class ExperimentParser(object):
                 agent=agent_obj,
                 journal=Journal(experiment_folder=experiment_folder),
                 settings=data,
-                benchmark=benchmark if calc_benchmark else None,
+                benchmark=benchmark_obj if calc_benchmark else None,
                 params=cast(Dict, ArgsParser.get_or_default(analysis, 'params', {}))
             )
         else:

@@ -90,14 +90,14 @@ class StandardExperiment(Experiment):
                 trade_orders_benchmark = self.benchmark.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
                 self.benchmark_journal.store_order(trade_orders_benchmark)
                 trade_fills_benchmark = self.market.execute(trade_orders_benchmark, timestamp)
-                self.journal.store_fill(trade_fills_benchmark)
+                self.benchmark_journal.store_fill(trade_fills_benchmark)
                 self.benchmark.update(trade_fills_benchmark, X[:idx + 1, :], Y[:idx + 2, :])
 
         self.journal.run_analytics('validation', self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
         self.journal.clean()
         self.agent.clean_portfolio()
         if self.benchmark:
-            self.journal.run_analytics(os.path.join('validation', 'benchmark'), self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
+            self.benchmark_journal.run_analytics(os.path.join('validation', 'benchmark'), self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
             self.benchmark_journal.clean()
             self.benchmark.clean_portfolio()
         
@@ -114,13 +114,10 @@ class StandardExperiment(Experiment):
                 trade_orders_benchmark = self.benchmark.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
                 self.benchmark_journal.store_order(trade_orders_benchmark)
                 trade_fills_benchmark = self.market.execute(trade_orders_benchmark, timestamp)
-                self.journal.store_fill(trade_fills_benchmark)
+                self.benchmark_journal.store_fill(trade_fills_benchmark)
                 self.benchmark.update(trade_fills_benchmark, X[:idx + 1, :], Y[:idx + 2, :])
         
         self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test, self.market.instruments)
-        
         if self.benchmark:
-            self.journal.run_analytics(os.path.join('test', 'benchmark'), self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
-            self.benchmark_journal.clean()
-            self.benchmark.clean_portfolio()
+            self.benchmark_journal.run_analytics(os.path.join('test', 'benchmark'), self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
         self.journal.export_settings(self.settings)
