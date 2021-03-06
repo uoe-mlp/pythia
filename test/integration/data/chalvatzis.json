@@ -50,5 +50,23 @@
                 }
             }
         }
+    },
+    "benchmark": {
+        "type": "supervised",
+        "params": {
+            "predictor": {
+                "type": "flat",
+                "params": {
+                    "first_column_cash": true
+                }
+            },
+            "trader": {
+                "type": "buy_and_hold",
+                "params": {
+                    "first_column_cash": true
+                }
+            }
+        }
+
     }
 }

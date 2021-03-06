@@ -32,6 +32,7 @@
                     "learning_rate_decay": 1,
                     "epochs": 10,
                     "iter_per_item": 3,
+                    "update_iter_per_item": 9,
                     "predict_returns": false,
                     "window_size": 11,
                     "dropout": 0.5,
@@ -50,5 +51,23 @@
                 }
             }
         }
+    },
+    "benchmark": {
+        "type": "supervised",
+        "params": {
+            "predictor": {
+                "type": "flat",
+                "params": {
+                    "first_column_cash": true
+                }
+            },
+            "trader": {
+                "type": "buy_and_hold",
+                "params": {
+                    "first_column_cash": true
+                }
+            }
+        }
+
     }
 }
