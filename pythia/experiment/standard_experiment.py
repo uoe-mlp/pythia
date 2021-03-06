@@ -119,5 +119,5 @@ class StandardExperiment(Experiment):
         
         self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test, self.market.instruments)
         if self.benchmark:
-            self.benchmark_journal.run_analytics(os.path.join('test', 'benchmark'), self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
+            self.benchmark_journal.run_analytics(os.path.join('test', 'benchmark'), self.market.timestamps[train_num + val_num:], Y_test, self.market.instruments)
         self.journal.export_settings(self.settings)
