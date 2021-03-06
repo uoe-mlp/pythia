@@ -16,7 +16,7 @@ class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
                  epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_col_cash: bool,
-                 initial_learning_rate: float, learning_rate_decay: float, update_iter_per_item: int, 
+                 initial_learning_rate: float, learning_rate_decay: float, batch_size: int, update_iter_per_item: int, 
                  loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
         super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_col_cash)
         
@@ -25,6 +25,7 @@ class ChalvatzisPredictor(Predictor):
         self.dropout: float = dropout
         self.all_hidden: bool = all_hidden
         self.epochs: int = epochs
+        self.batch_size = batch_size
         self.iter_per_item: int = iter_per_item if iter_per_item is not None else 1
         self.shuffle: bool = shuffle
         self.update_iter_per_item: int = update_iter_per_item
@@ -58,6 +59,7 @@ class ChalvatzisPredictor(Predictor):
         dropout: float = ArgsParser.get_or_default(params, 'dropout', 0)
         learning_rate_decay: float = ArgsParser.get_or_default(params, 'learning_rate_decay', 1)
         initial_learning_rate: float = ArgsParser.get_or_default(params, 'initial_learning_rate', 0.001)
+        batch_size: int = ArgsParser.get_or_default(params, 'batch_size', 1)
         update_iter_per_item: int = ArgsParser.get_or_default(params, 'update_iter_per_item', iter_per_item)
         normalize_dict: Dict[str, Any] = ArgsParser.get_or_default(params, 'normalize', {})
         if normalize_dict:
@@ -81,7 +83,7 @@ class ChalvatzisPredictor(Predictor):
 
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
             epochs=epochs, predict_returns=predict_returns, first_col_cash=first_col_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
-            initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
+            batch_size=batch_size, initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
             update_iter_per_item=update_iter_per_item)
 
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
@@ -119,7 +121,7 @@ class ChalvatzisPredictor(Predictor):
         Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
         obs = OutputObserver(self.model, X_train, Y_train, self.epochs)
-        self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=1, validation_data=(X_val, Y_val), callbacks=[obs])
+        self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
         
         Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
         if self.normalize:

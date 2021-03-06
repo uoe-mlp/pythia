@@ -32,9 +32,11 @@
                     "learning_rate_decay": 1,
                     "epochs": 2000,
                     "iter_per_item": 3,
+                    "update_iter_per_item": 20,
                     "predict_returns": false,
                     "window_size": 11,
                     "dropout": 0.5,
+                    "batch_size": 200,
                     "hidden_size": [128, 128, 128],
                     "normalize": {
                         "active": true,
