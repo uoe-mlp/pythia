@@ -16,7 +16,8 @@ class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
                  epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_col_cash: bool,
-                 initial_learning_rate: float, learning_rate_decay: float, loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
+                 initial_learning_rate: float, learning_rate_decay: float, update_iter_per_item: int, 
+                 loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
         super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_col_cash)
         
         self.window_size: int = window_size
@@ -26,6 +27,7 @@ class ChalvatzisPredictor(Predictor):
         self.epochs: int = epochs
         self.iter_per_item: int = iter_per_item if iter_per_item is not None else 1
         self.shuffle: bool = shuffle
+        self.update_iter_per_item: int = update_iter_per_item
         self.normalize: bool = normalize
         if self.normalize:
             self.normalize_min: float = normalize_min if normalize_min is not None else -1
@@ -56,6 +58,7 @@ class ChalvatzisPredictor(Predictor):
         dropout: float = ArgsParser.get_or_default(params, 'dropout', 0)
         learning_rate_decay: float = ArgsParser.get_or_default(params, 'learning_rate_decay', 1)
         initial_learning_rate: float = ArgsParser.get_or_default(params, 'initial_learning_rate', 0.001)
+        update_iter_per_item: int = ArgsParser.get_or_default(params, 'update_iter_per_item', iter_per_item)
         normalize_dict: Dict[str, Any] = ArgsParser.get_or_default(params, 'normalize', {})
         if normalize_dict:
             normalize: bool = ArgsParser.get_or_default(normalize_dict, 'active', False)
@@ -78,7 +81,8 @@ class ChalvatzisPredictor(Predictor):
 
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
             epochs=epochs, predict_returns=predict_returns, first_col_cash=first_col_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
-            initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max)
+            initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
+            update_iter_per_item=update_iter_per_item)
 
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
         """
@@ -214,7 +218,7 @@ class ChalvatzisPredictor(Predictor):
         data = self.__create_sequences(x, y, [self.window_size])
         x, y = data[0]
         
-        X_train = np.array([x,] * self.iter_per_item).transpose([1,0,2,3]).reshape([x.shape[0] * self.iter_per_item] + list(x.shape[1:]))
-        Y_train = np.array([y,] * self.iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.iter_per_item] + list(y.shape[1:]))
+        X_train = np.array([x,] * self.update_iter_per_item).transpose([1,0,2,3]).reshape([x.shape[0] * self.update_iter_per_item] + list(x.shape[1:]))
+        Y_train = np.array([y,] * self.update_iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.update_iter_per_item] + list(y.shape[1:]))
 
         self.model.fit(X_train, Y_train, batch_size=1)
