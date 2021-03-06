@@ -1,7 +1,7 @@
 {
     "analysis": {
         "type": "standard",
-        "folder": "data/experiments/chalvatzis",
+        "folder": "data/experiments/chalvatzis_short",
         "params": {
             "train": 0.200,
             "val": 0.134,
