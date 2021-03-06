@@ -22,7 +22,7 @@ class SupervisedAgent(Agent):
     @staticmethod
     def initialise(input_size: int, output_size: int, params: Dict) -> SupervisedAgent:
         # ---- PREDICTOR ----
-        predictor_config = ArgsParser.get_or_default(params, 'predictor', {'type': 'linear'})
+        predictor_config = ArgsParser.get_or_default(params, 'predictor', {'type': 'flat'})
         predictor_params = ArgsParser.get_or_default(predictor_config, 'params', {})
         if predictor_config['type'].lower() == 'linear':
             predictor: Predictor = LinearPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
@@ -34,7 +34,7 @@ class SupervisedAgent(Agent):
             raise ValueError('Predictor type "%s" not recognized'  % (predictor_config['type']))
 
         # ---- TRADER ----
-        trader_config = ArgsParser.get_or_default(params, 'trader', {'type': 'naive'})
+        trader_config = ArgsParser.get_or_default(params, 'trader', {'type': 'buy_and_hold'})
         trader_params = ArgsParser.get_or_default(trader_config, 'params', {})
 
         if trader_config['type'].lower() == 'naive':
