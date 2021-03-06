@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
-from pythia.journal import TradeOrder, TradeFill
-from pythia.agent.predictor import Predictor, LinearPredictor
-from pythia.agent.trader import NaiveTrader
+from pythia.journal import TradeFill
+from pythia.agent.predictor import FlatPredictor
+from pythia.agent.trader import BuyAndHoldTrader
 
 from pandas import Timestamp
 
@@ -11,8 +11,8 @@ from pythia.agent import SupervisedAgent
 
 def test_check_initialisation():
     agent = SupervisedAgent.initialise(1, 1, {})
-    assert isinstance(agent.predictor, LinearPredictor)
-    assert isinstance(agent.trader, NaiveTrader)
+    assert isinstance(agent.predictor, FlatPredictor)
+    assert isinstance(agent.trader, BuyAndHoldTrader)
 
 def test_fit():
     sa = SupervisedAgent.initialise(1, 1, {"predictor": {"type": "linear", "params": {"learning_rate": 0.01, "epochs": 2500}}})
