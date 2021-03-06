@@ -96,9 +96,9 @@ class DailyHistoricalMarket(Market):
 
     @staticmethod
     def combine_datasets(features: List[pd.DataFrame], targets: List[pd.DataFrame]) -> Tuple[np.ndarray, np.ndarray, List[pd.Timestamp], List[str]]:
-        targets_df = reduce(lambda left,right: pd.merge(left,right,on='date'), targets)
-        targets_df.sort_index(inplace=True)
-        targets_df.bfill(inplace=True)
+        targets_df_tmp = reduce(lambda left,right: pd.merge(left,right,on='date'), targets)
+        targets_df_tmp.sort_index(inplace=True)
+        targets_df = targets_df_tmp.bfill(inplace=False)
         targets_df = pd.concat([pd.Series([1 for x in targets_df.index.tolist()], index=targets_df.index.tolist(), name='cash'), targets_df], axis=1)
         names = [str(x) for x in targets_df.columns.to_list()]
         targets_df.columns = [i for i in range(targets_df.shape[1])]
