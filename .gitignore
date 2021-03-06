@@ -10,4 +10,4 @@ tutorials/alessandro/data/test.ft.txt.bz2
 tutorials/alessandro/data/train.ft.txt.bz2
 *.egg-info
 .tmp
-data/experiments/**/data.json
+data/experiments/**/results__*
