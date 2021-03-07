@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Callable, Dict, Optional, List
+from typing import Callable, Dict, Optional, List, Any
 from abc import ABC, abstractclassmethod
 import numpy as np
 from pandas import Timestamp
+import copy
 
 from pythia.utils import ArgsParser
 from pythia.journal import TradeOrder
@@ -48,8 +49,8 @@ class SupervisedAgent(Agent):
 
         return SupervisedAgent(predictor, trader)
 
-    def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], **kwargs):
-        prediction = self.predictor.fit(X_train, Y_train, X_val, Y_val, **kwargs)
+    def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
+        prediction = self.predictor.fit(X_train, Y_train, X_val, Y_val, epochs_between_validation=epochs_between_validation, val_infra=None if val_infra is None else val_infra + [copy.deepcopy(self.trader)], **kwargs)
         self.trader.fit(prediction=prediction, conviction=prediction, Y=Y_train, predict_returns=self.predictor.predict_returns)
 
     def act(self, X: np.ndarray, timestamp: Timestamp, Y: np.ndarray) -> List[TradeOrder]:

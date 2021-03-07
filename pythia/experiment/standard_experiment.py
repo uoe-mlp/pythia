@@ -1,6 +1,11 @@
 from __future__ import annotations
+from abc import abstractmethod
 import os
 from typing import Optional, List, Dict, cast
+import copy
+import numpy as np
+from pythia import market
+from pythia import journal
 
 from pythia.utils import ArgsParser
 from pythia.journal import Journal
@@ -16,17 +21,20 @@ class StandardExperiment(Experiment):
 
     DEFAULT_SPLIT: List[float] = [0.7, 0.15, 0.15]
 
-    def __init__(self, path: str, market: Market, agent: Agent, journal: Journal, benchmark: Optional[Agent], settings: Dict, train: float, val: float, test: float):
+    def __init__(self, path: str, market: Market, agent: Agent, journal: Journal, benchmark: Optional[Agent], settings: Dict, train: float, val: float, test: float, epochs_between_validation: Optional[int]):
         super(StandardExperiment, self).__init__(path, market, agent, journal, benchmark, settings)
         self.train: float = train
         self.val: float = val
         self.test: float = test
+        self.epochs_between_validation: Optional[int] = epochs_between_validation
 
     @staticmethod
     def initialise(path: str, market: Market, agent: Agent, journal: Journal, benchmark: Optional[Agent], settings: Dict, params: Dict=None) -> Experiment:
-        train: Optional[float] = ArgsParser.get_or_default(params if params is not None else {}, 'train', None)
-        val: Optional[float] = ArgsParser.get_or_default(params if params is not None else {}, 'val', None)
-        test: Optional[float] = ArgsParser.get_or_default(params if params is not None else {}, 'test', None)
+        p: Dict = params if params is not None else {}
+        train: Optional[float] = ArgsParser.get_or_default(p, 'train', None)
+        val: Optional[float] = ArgsParser.get_or_default(p, 'val', None)
+        test: Optional[float] = ArgsParser.get_or_default(p, 'test', None)
+        epochs_between_validation: Optional[int] = ArgsParser.get_or_default(p, 'epochs_between_validation', None)
 
         fractions: List[Optional[float]] = [train, val, test]
 
@@ -46,7 +54,8 @@ class StandardExperiment(Experiment):
             # If all available, just use them. Had to use cast here cause linter could not pick the logic up. 
             clean_fractions = cast(List[float], fractions) 
 
-        return StandardExperiment(path, market, agent, journal, benchmark, settings, train=clean_fractions[0], val=clean_fractions[1], test=clean_fractions[2])
+        return StandardExperiment(path, market, agent, journal, benchmark, settings, train=clean_fractions[0], val=clean_fractions[1], test=clean_fractions[2],
+            epochs_between_validation=epochs_between_validation)
 
     def run(self):
         X = self.market.X
@@ -63,10 +72,25 @@ class StandardExperiment(Experiment):
         X_test = X[train_num+val_num:, :]
         Y_test = Y[train_num+val_num:, :]
 
+        if self.epochs_between_validation:
+            val_infra = [
+                copy.deepcopy(self.agent),
+                self.market.execute,
+                self.market.timestamps,
+                self.market.instruments,
+                copy.deepcopy(self.journal),
+                train_num,
+                val_num,
+            ]
+        else:
+            val_infra = []
+
         self.agent.fit(X_train, Y_train, X_val, Y_val, 
             simulator=lambda orders, timestamp: self.market.simulate(orders, timestamp) 
             if timestamp <= self.market.timestamps[train_num + val_num - 1] 
-            else ValueError('Date is out of traning or validation period.'))
+            else ValueError('Date is out of traning or validation period.'),
+            epochs_between_validation=self.epochs_between_validation,
+            val_infra=val_infra)
 
         if self.benchmark:
             self.benchmark.fit(X_train, Y_train, X_val, Y_val, 
