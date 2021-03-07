@@ -50,7 +50,7 @@ class Analytics(object):
             
         return Analytics(
             timeseries,
-            cumulative_return=timeseries.iloc[-1], 
+            cumulative_return=timeseries.iloc[-1] - 1, 
             volatility=Analytics.calculate_volatility(timeseries),
             sharpe_ratio=Analytics.calculate_sharpe_ratio(timeseries),
             sortino_ratio=Analytics.calculate_sortino_ratio(timeseries),
