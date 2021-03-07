@@ -1,4 +1,4 @@
-from typing import List, Union, Optional, Callable
+from typing import List, Union, Optional, Callable, Any
 import tensorflow as tf
 import numpy as np
 
@@ -97,3 +97,20 @@ class LSTMChalvatzisTF(object):
 
     def evaluate(self, *args, **kwargs):
         return self.seq_model.evaluate(*args, **kwargs)
+    
+    def detach_model(self) -> Any:
+        m = self.seq_model
+        self.seq_model = None
+        return m
+    
+    def copy_model(self) -> Any:
+        return tf.keras.models.clone_model(self.seq_model, input_tensors=self.seq_model.input)
+
+    def attach_model(self, model) -> None:
+        self.seq_model = model
+
+    def set_weights(self, *args, **kwargs):
+        return self.seq_model.set_weights(*args, **kwargs)
+
+    def get_weights(self, *args, **kwargs):
+        return self.seq_model.get_weights(*args, **kwargs)

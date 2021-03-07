@@ -34,7 +34,7 @@ def test_prediction_act():
 
     sa.fit(X_train, Y_train, X_train, Y_train, [])
 
-    assert sa.act(X_test, Timestamp(2017, 1, 1, 12), Y_test)[0].instrument == 0
+    assert sa.act(X_test, Timestamp(2017, 1, 1, 12), Y_test)[0][0].instrument == 0
 
 def test_portfolio_update():
     agent = SupervisedAgent.initialise(1, 1, {})

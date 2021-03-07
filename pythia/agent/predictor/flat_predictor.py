@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional
 from abc import ABC, abstractclassmethod
 import numpy as np
 from torch import Tensor, empty, flatten
@@ -21,7 +21,7 @@ class FlatPredictor(Predictor):
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:
         return FlatPredictor(input_size=input_size, output_size=output_size)
 
-    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs) -> np.ndarray:
         """
         Description:
             The X and Y tensors are data representative of the same day.

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Callable, List
 from abc import ABC, abstractclassmethod
 import numpy as np
 
@@ -16,12 +16,12 @@ class Predictor(ABC):
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor: pass
 
     @abstractclassmethod
-    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs): pass
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs): pass
 
-    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+    def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         Y_new = self.remove_cash(Y.copy()) if self.first_col_cash else Y.copy()
         Y_val_new = self.remove_cash(Y_val.copy()) if self.first_col_cash and Y_val is not None else None
-        return self._inner_fit(X, Y_new, X_val, Y_val, **kwargs)
+        return self._inner_fit(X, Y_new, X_val, Y_val, epochs_between_validation=epochs_between_validation, val_infra=val_infra, **kwargs)
 
     @abstractclassmethod
     def _inner_predict(self, x: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]: pass
@@ -63,3 +63,9 @@ class Predictor(ABC):
         confidence_new[:,1:] = confidence
 
         return prediction_new, confidence_new
+
+    def detach_model(self): return None
+
+    def attach_model(self, model): pass
+
+    def copy_model(self): return None

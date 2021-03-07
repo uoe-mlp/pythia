@@ -20,9 +20,12 @@ class Journal(object):
         self.analytics: Optional[Analytics] = None
         self.started_at: datetime = datetime.now()
         self.timestamp: str = self.started_at.strftime('%Y%m%d_%H%M%S')
+        self.predictions: Dict[Timestamp, np.ndarray] = {}
 
-    def store_order(self, orders: List[TradeOrder]):
+    def store_order(self, orders: List[TradeOrder], price_prediction: Optional[np.ndarray]=None, price_prediction_timestamp: Optional[Timestamp]=None):
         self.open_orders += orders
+        if price_prediction is not None:
+            self.predictions[price_prediction_timestamp] = price_prediction
 
     def store_fill(self, fills: List[TradeFill]):
         for fill in fills:
@@ -34,7 +37,7 @@ class Journal(object):
                 raise ValueError('One and only one open order should match the id for this fill.')
 
     def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str]):
-        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices)
+        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
             'direction': x.direction,
@@ -44,6 +47,7 @@ class Journal(object):
             'value': x.value,
             'completed': x.completed.isoformat(),
         } for x in trade if isinstance(x, TradeFill)] for trade in self.trades],[])
+        analytics['number_of_trades'] = len(analytics['fills'])
 
         if not os.path.isdir(self.experiment_folder):
             os.mkdir(self.experiment_folder)
@@ -63,6 +67,7 @@ class Journal(object):
         self.open_orders = []
         self.trades = []
         self.analytics = None
+        self.predictions = {}
 
     def export_settings(self, settings: Dict):
         s = copy.deepcopy(settings)

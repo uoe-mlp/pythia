@@ -4,7 +4,8 @@ from abc import ABC, abstractclassmethod
 import numpy as np
 from numpy.core.arrayprint import dtype_is_implied
 import tensorflow as tf
-import warnings
+import copy
+import os
 
 from pythia.utils import ArgsParser
 from pythia.agent.network import LSTMChalvatzisTF, OutputObserver
@@ -86,14 +87,18 @@ class ChalvatzisPredictor(Predictor):
             batch_size=batch_size, initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
             update_iter_per_item=update_iter_per_item)
 
-    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, **kwargs):
+    def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         """
         Description:
             The X and Y tensors are data representative of the same day.
             Since the aim is to predict next day price, we need to lag
             the Y np.ndarray by an index (a day).
         """
+        X_in = X.copy()
         Y_in = Y.copy()
+        X_val_in = X_val.copy() if X_val is not None else X_in
+        Y_val_in = Y_val.copy() if Y_val is not None else Y_in
+
         splits = [X.shape[0]]
         if X_val is not None and Y_val is not None:
             splits.append(X.shape[0] + X_val.shape[0])
@@ -121,11 +126,29 @@ class ChalvatzisPredictor(Predictor):
         Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
         obs = OutputObserver(self.model, X_train, Y_train, self.epochs)
-        self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
-        
-        Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
-        if self.normalize:
-            Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
+        if (epochs_between_validation is not None):
+            loops = np.ceil(self.epochs / float(epochs_between_validation))
+            for loop in range(int(loops)):
+                if loop == loops - 1:
+                    epochs: int = int(self.epochs - loops * epochs_between_validation)
+                else:
+                    epochs = int(epochs_between_validation)
+                self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
+
+                # Predict
+                Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
+                if self.normalize:
+                    Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
+                if (loop == loops - 1) and (epochs == epochs_between_validation):
+                    pass
+                else:
+                    self.validate(loop, val_infra, Y_hat, X_in, Y_in, X_val_in, Y_val_in)
+        else:
+            self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
+            # Predict
+            Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
+            if self.normalize:
+                Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
         return Y_hat
 
     def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
@@ -224,3 +247,59 @@ class ChalvatzisPredictor(Predictor):
         Y_train = np.array([y,] * self.update_iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.update_iter_per_item] + list(y.shape[1:]))
 
         self.model.fit(X_train, Y_train, batch_size=1)
+
+    def detach_model(self) -> Any:
+        m = self.model.detach_model()
+        return m
+    
+    def copy_model(self) -> Any:
+        model = LSTMChalvatzisTF(
+            input_size=self.input_size, window_size=self.window_size, hidden_size=self.hidden_size, output_size=self.output_size,
+            dropout=self.dropout)
+        lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+            initial_learning_rate=self.lr_schedule.initial_learning_rate,
+            decay_steps=1,
+            decay_rate=self.lr_schedule.decay_rate,
+            staircase=False)
+
+        optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
+        loss = self.loss
+        model.compile(optimizer, loss, ['mae'])
+        model.set_weights(self.model.get_weights()) 
+        return model
+
+    def attach_model(self, model) -> None:
+        self.model.attach_model(model)
+
+    def validate(self, num, val_infra, prediction, X_train, Y_train, X_val, Y_val) -> None:
+        agent = val_infra[0]
+        market_execute = val_infra[1]
+        timestamps = val_infra[2]
+        instruments = val_infra[3]
+        journal = val_infra[4]
+        train_num = val_infra[5]
+        val_num = val_infra[6]
+        trader = val_infra[7]
+
+        model_copy = self.copy_model()
+        model = self.detach_model()
+        predictor: Predictor = copy.deepcopy(self)
+        self.attach_model(model)
+        predictor.attach_model(model_copy)
+        trader.fit(prediction=prediction, conviction=prediction, Y=Y_train, predict_returns=predictor.predict_returns)
+
+        agent.predictor = predictor
+        agent.trader = trader
+        X = np.concatenate([X_train, X_val], axis=0)
+        Y = np.concatenate([Y_train, Y_val], axis=0)
+
+        for i in range(val_num):
+            idx = train_num + i
+            timestamp = timestamps[idx]
+            trade_orders, price_prediction = agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
+            journal.store_order(trade_orders, price_prediction, timestamp)
+            trade_fills = market_execute(trade_orders, timestamp)
+            journal.store_fill(trade_fills)
+            agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
+
+        journal.run_analytics('train_%d' % num, timestamps[train_num:train_num + val_num], Y_val, instruments)
