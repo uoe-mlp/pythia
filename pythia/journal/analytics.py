@@ -100,6 +100,6 @@ class Analytics(object):
         data['sortino_ratio'] = self.sortino_ratio
         data['maximum_drawdown'] = self.maximum_drawdown
         data['correlation'] = self.correlation
-        data['mean_directional_accuracy'] = None if not self.mean_directional_accuracy else self.mean_directional_accuracy.tolist()
+        data['mean_directional_accuracy'] = self.mean_directional_accuracy.tolist() if self.mean_directional_accuracy is not None else None
 
         return data
