@@ -296,8 +296,8 @@ class ChalvatzisPredictor(Predictor):
         for i in range(val_num):
             idx = train_num + i
             timestamp = timestamps[idx]
-            trade_orders = agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
-            journal.store_order(trade_orders)
+            trade_orders, price_prediction = agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
+            journal.store_order(trade_orders, price_prediction, timestamp)
             trade_fills = market_execute(trade_orders, timestamp)
             journal.store_fill(trade_fills)
             agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])

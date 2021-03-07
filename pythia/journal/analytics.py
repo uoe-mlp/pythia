@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import time
 from pandas._libs.tslibs import Timestamp
 import numpy as np
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import pandas as pd
 
 from .trade_fill import TradeFill
@@ -10,16 +10,19 @@ from .trade_fill import TradeFill
 
 class Analytics(object):
 
-    def __init__(self, timeseries: pd.Series, volatility: float, cumulative_return: float, sharpe_ratio: float, sortino_ratio: float, maximum_drawdown: float):
+    def __init__(self, timeseries: pd.Series, volatility: float, cumulative_return: float, sharpe_ratio: float, sortino_ratio: float, maximum_drawdown: float,
+        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray]):
         self.timeseries: pd.Series = timeseries
         self.volatility: float = volatility
         self.cumulative_return: float = cumulative_return
         self.sharpe_ratio: float = sharpe_ratio
         self.sortino_ratio: float = sortino_ratio
         self.maximum_drawdown: float = maximum_drawdown
+        self.correlation: Optional[np.ndarray] = correlation
+        self.mean_directional_accuracy: Optional[np.ndarray] = mean_directional_accuracy
 
     @staticmethod
-    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray) -> Analytics:
+    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, predictions: Optional[Dict[Timestamp, np.ndarray]]) -> Analytics:
         holdings_df = pd.DataFrame(prices * 0, index=timestamps).astype('float')
         holdings_df.iloc[0, 0] = 1      # Initially, all in the first asset (cash)
 
@@ -35,13 +38,26 @@ class Analytics(object):
 
         timeseries = (prices_df * holdings_df).sum(axis=1)
         timeseries /= timeseries[0]               # We subtract the initial trading cost (aka, we assume we start from an ideal scenario) 
+
+        if predictions is not None:
+            p_df = pd.DataFrame(predictions).transpose()
+            p_df.iloc[1:, :] = p_df.iloc[:-1, :]
+            p_df.iloc[0,:] = np.NaN
+            exp_ret = p_df.values[1:,:] / prices[:-1,:] - 1
+            real_ret = prices[1:,:] / prices[:-1,:] - 1
+
+            mda = np.mean(np.sign(exp_ret) == np.sign(real_ret), axis=0)
+            correlation = [np.corrcoef(x, y)[1,0] for x, y in zip(exp_ret.T, real_ret.T)]
+            
         return Analytics(
             timeseries,
             cumulative_return=timeseries.iloc[-1], 
             volatility=Analytics.calculate_volatility(timeseries),
             sharpe_ratio=Analytics.calculate_sharpe_ratio(timeseries),
             sortino_ratio=Analytics.calculate_sortino_ratio(timeseries),
-            maximum_drawdown=Analytics.calculate_maximum_drawdonw(timeseries))
+            maximum_drawdown=Analytics.calculate_maximum_drawdonw(timeseries),
+            correlation=correlation if predictions is not None else None,
+            mean_directional_accuracy=mda if predictions is not None else None)
 
     @staticmethod
     def timeseries2returns(timeseries: pd.Series) -> pd.Series:

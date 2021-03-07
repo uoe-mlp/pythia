@@ -104,14 +104,14 @@ class StandardExperiment(Experiment):
         for i in range(val_num):
             idx = train_num + i
             timestamp = self.market.timestamps[idx]
-            trade_orders = self.agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
-            self.journal.store_order(trade_orders)
+            trade_orders, price_prediction = self.agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
+            self.journal.store_order(trade_orders, price_prediction, timestamp)
             trade_fills = self.market.execute(trade_orders, timestamp)
             self.journal.store_fill(trade_fills)
             self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
             
             if self.benchmark:
-                trade_orders_benchmark = self.benchmark.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
+                trade_orders_benchmark, _ = self.benchmark.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
                 self.benchmark_journal.store_order(trade_orders_benchmark)
                 trade_fills_benchmark = self.market.execute(trade_orders_benchmark, timestamp)
                 self.benchmark_journal.store_fill(trade_fills_benchmark)
@@ -128,14 +128,14 @@ class StandardExperiment(Experiment):
         for i in range(test_num):
             idx = train_num + val_num + i
             timestamp = self.market.timestamps[idx]
-            trade_orders = self.agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
-            self.journal.store_order(trade_orders)
+            trade_orders, price_prediction = self.agent.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
+            self.journal.store_order(trade_orders, price_prediction, timestamp)
             trade_fills = self.market.execute(trade_orders, timestamp)
             self.journal.store_fill(trade_fills)
             self.agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
             
             if self.benchmark:
-                trade_orders_benchmark = self.benchmark.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
+                trade_orders_benchmark, _ = self.benchmark.act(X[:idx + 1, :], timestamp, Y[:idx + 1, :])
                 self.benchmark_journal.store_order(trade_orders_benchmark)
                 trade_fills_benchmark = self.market.execute(trade_orders_benchmark, timestamp)
                 self.benchmark_journal.store_fill(trade_fills_benchmark)
