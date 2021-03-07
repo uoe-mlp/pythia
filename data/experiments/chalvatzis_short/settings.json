@@ -5,7 +5,8 @@
         "params": {
             "train": 0.200,
             "val": 0.134,
-            "test": 0.666
+            "test": 0.666,
+            "epochs_between_validation": 5
         }
     },
     "market": {
