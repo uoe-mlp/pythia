@@ -99,5 +99,7 @@ class Analytics(object):
         data['sharpe_ratio'] = self.sharpe_ratio
         data['sortino_ratio'] = self.sortino_ratio
         data['maximum_drawdown'] = self.maximum_drawdown
+        data['correlation'] = self.correlation
+        data['mean_directional_accuracy'] = None if not self.mean_directional_accuracy else self.mean_directional_accuracy.tolist()
 
         return data
