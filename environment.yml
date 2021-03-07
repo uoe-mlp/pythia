@@ -15,5 +15,6 @@ dependencies:
     - torchvision
     - pandas_datareader==0.9.0
     - tensorflow==2.4.1
+    - -e .
 variables:
   KMP_DUPLICATE_LIB_OK: True
