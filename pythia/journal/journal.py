@@ -67,6 +67,7 @@ class Journal(object):
         self.open_orders = []
         self.trades = []
         self.analytics = None
+        self.predictions = {}
 
     def export_settings(self, settings: Dict):
         s = copy.deepcopy(settings)

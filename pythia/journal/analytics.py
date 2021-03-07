@@ -39,10 +39,9 @@ class Analytics(object):
         timeseries = (prices_df * holdings_df).sum(axis=1)
         timeseries /= timeseries[0]               # We subtract the initial trading cost (aka, we assume we start from an ideal scenario) 
 
-        if predictions is not None:
+        if bool(predictions):
             p_df = pd.DataFrame(predictions).transpose()
             p_df.iloc[1:, :] = p_df.iloc[:-1, :]
-            p_df.iloc[0,:] = np.NaN
             exp_ret = p_df.values[1:,:] / prices[:-1,:] - 1
             real_ret = prices[1:,:] / prices[:-1,:] - 1
 
@@ -56,8 +55,8 @@ class Analytics(object):
             sharpe_ratio=Analytics.calculate_sharpe_ratio(timeseries),
             sortino_ratio=Analytics.calculate_sortino_ratio(timeseries),
             maximum_drawdown=Analytics.calculate_maximum_drawdonw(timeseries),
-            correlation=correlation if predictions is not None else None,
-            mean_directional_accuracy=mda if predictions is not None else None)
+            correlation=None if not predictions else correlation,
+            mean_directional_accuracy=None if not predictions else mda)
 
     @staticmethod
     def timeseries2returns(timeseries: pd.Series) -> pd.Series:
