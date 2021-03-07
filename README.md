@@ -1,7 +1,7 @@
 ![Build Python](https://github.com/GrowlingM1ke/MLP-CW2-2021/workflows/Build%20Python/badge.svg) [![codecov](https://codecov.io/gh/uoe-mlp/MLP-CW2-2021/branch/main/graph/badge.svg?token=LJ7VBCEHTH)](https://codecov.io/gh/uoe-mlp/MLP-CW2-2021)
 
 # Pythia
-Times series deep learning model for trading.
+Times series deep learning model for trading. 
 
 ## Main Classes
 - ```experiment``` is the configurations of everything. In theory, this should be reproducible and deterministic (maybe I need to add a seed in the json). The experiment determines the temporal framework used. Values can be for instance walk-forward backtest, cross-validation, standard (=train-val-test), robustness analysis, transfer learning and so on
