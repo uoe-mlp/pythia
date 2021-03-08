@@ -5,6 +5,9 @@ import numpy as np
 from datetime import datetime
 import json
 import copy
+import re
+from pythia.utils import ArgsParser
+import csv
 
 from .trade_order import TradeOrder
 from .trade_fill import TradeFill
@@ -36,7 +39,7 @@ class Journal(object):
             else:
                 raise ValueError('One and only one open order should match the id for this fill.')
 
-    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str]):
+    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, **kwargs):
         self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
@@ -48,6 +51,7 @@ class Journal(object):
             'completed': x.completed.isoformat(),
         } for x in trade if isinstance(x, TradeFill)] for trade in self.trades],[])
         analytics['number_of_trades'] = len(analytics['fills'])
+        analytics.update(**kwargs)
 
         if not os.path.isdir(self.experiment_folder):
             os.mkdir(self.experiment_folder)
@@ -60,8 +64,54 @@ class Journal(object):
         if not os.path.isdir(type_folder):
             os.mkdir(type_folder)
 
-        with open(os.path.join(type_folder, 'data.json'), 'w') as fp:
+        if name is not None:
+            filename = '%s.json' % (name)
+        else:
+            filename = 'data.json'
+
+        with open(os.path.join(type_folder, filename), 'w') as fp:
             json.dump(analytics, fp, indent=4, sort_keys=True)
+
+    def compile_results(self, instruments: List[str]):
+        train_folder = os.path.join(self.experiment_folder, 'results__' + self.timestamp, 'train')
+
+        all_metrics: List = ["epochs", "cum_return", "max_drawdown",
+                            "n_trades", "sharpe", "sortino", "volatility"] + \
+                            ["%s_mda" % instr for instr in instruments] + \
+                            ["%s_correlation" % instr for instr in instruments]
+        
+        # Since the files are processed out of order keep a dictionary
+        ordered_metrics: Dict = {}
+
+        # Get list of all files
+        train_reports = [f for f in os.listdir(train_folder)]
+        for i, report in enumerate(train_reports):
+            subdir = os.path.join(train_folder, report)
+            with open(subdir, 'r') as fp:
+                data: Dict = json.load(fp)
+
+            last_epoch = ArgsParser.get_or_default(data, 'last_epoch', None)
+            cumulative_return = ArgsParser.get_or_default(data, 'cumulative_return', None)
+            maximum_drawdown = ArgsParser.get_or_default(data, 'maximum_drawdown', None)
+            number_of_trades = ArgsParser.get_or_default(data, 'number_of_trades', None)
+            sharpe_ratio = ArgsParser.get_or_default(data, 'sharpe_ratio', None)
+            sortino_ratio = ArgsParser.get_or_default(data, 'sortino_ratio', None)
+            volatility = ArgsParser.get_or_default(data, 'volatility', None)
+            mean_directional_accuracy = ArgsParser.get_or_default(data, 'mean_directional_accuracy', [None for instr in instruments])
+            correlation = ArgsParser.get_or_default(data, 'correlation', [None for instr in instruments])
+
+            ordered_metrics[i] = [last_epoch, cumulative_return, maximum_drawdown, number_of_trades,
+                                sharpe_ratio, sortino_ratio, volatility] + mean_directional_accuracy + correlation
+
+        sorted_dict = dict(sorted(ordered_metrics.items()))
+
+        output_csv = os.path.join(train_folder, "output.csv")
+        # Write to csv
+        with open(output_csv, 'w+', newline='\n') as csv_file:
+                writer = csv.writer(csv_file, delimiter=',')
+                writer.writerow(all_metrics)
+                for k, v in sorted_dict.items():
+                    writer.writerow(v)
 
     def clean(self):        
         self.open_orders = []

@@ -15,7 +15,7 @@ from .predictor import Predictor
 class FlatPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int):
-        super(FlatPredictor, self).__init__(input_size, output_size, predict_returns=True, first_col_cash=False)
+        super(FlatPredictor, self).__init__(input_size, output_size, predict_returns=True, first_column_cash=False)
 
     @staticmethod
     def initialise(input_size: int, output_size: int, params: Dict) -> Predictor:

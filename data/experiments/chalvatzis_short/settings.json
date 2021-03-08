@@ -6,7 +6,7 @@
             "train": 0.200,
             "val": 0.134,
             "test": 0.666,
-            "epochs_between_validation": 5
+            "epochs_between_validation": 3
         }
     },
     "market": {
