@@ -143,6 +143,11 @@ class ChalvatzisPredictor(Predictor):
                     pass
                 else:
                     self.validate(loop, val_infra, Y_hat, X_in, Y_in, X_val_in, Y_val_in)
+            # Compile all the results together
+            if val_infra is not None:
+                journal = val_infra[4]
+                journal.compile_results(epochs_between_validation, self.epochs - loops * epochs_between_validation)
+
         else:
             self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
             # Predict

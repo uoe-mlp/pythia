@@ -36,7 +36,7 @@
                     "predict_returns": false,
                     "window_size": 11,
                     "dropout": 0.5,
-                    "batch_size": 200,
+                    "batch_size": 300,
                     "hidden_size": [128, 128, 128],
                     "normalize": {
                         "active": true,
