@@ -21,7 +21,7 @@ class Predictor(ABC):
     def fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         Y_new = self.remove_cash(Y.copy()) if self.first_column_cash else Y.copy()
         Y_val_new = self.remove_cash(Y_val.copy()) if self.first_column_cash and Y_val is not None else None
-        return self._inner_fit(X, Y_new, X_val, Y_val, epochs_between_validation=epochs_between_validation, val_infra=val_infra, **kwargs)
+        return self._inner_fit(X, Y_new, X_val, Y_val_new, epochs_between_validation=epochs_between_validation, val_infra=val_infra, **kwargs)
 
     @abstractclassmethod
     def _inner_predict(self, x: np.ndarray, all_history: bool=False) -> Tuple[np.ndarray, np.ndarray]: pass
@@ -43,13 +43,12 @@ class Predictor(ABC):
 
     def prepare_prices(self, Y: np.ndarray) -> np.ndarray:
         if self.predict_returns:
-            Y = Y[1:,:] / Y[:-1,:] - 1
+            return Y[1:,:] / Y[:-1,:] - 1
         else:
-            Y = Y[1:,:]
-        return Y
+            return Y[1:,:]
 
     def remove_cash(self, Y: np.ndarray) -> np.ndarray:
-        Y = Y[:,1:]
+        return Y[:,1:]
 
     def add_cash(self, prediction: np.ndarray, confidence: np.ndarray) -> np.ndarray:
         if self.predict_returns:
