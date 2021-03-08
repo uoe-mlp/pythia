@@ -39,7 +39,7 @@ class Journal(object):
             else:
                 raise ValueError('One and only one open order should match the id for this fill.')
 
-    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str]):
+    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, **kwargs):
         self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
@@ -51,6 +51,7 @@ class Journal(object):
             'completed': x.completed.isoformat(),
         } for x in trade if isinstance(x, TradeFill)] for trade in self.trades],[])
         analytics['number_of_trades'] = len(analytics['fills'])
+        analytics.update(**kwargs)
 
         if not os.path.isdir(self.experiment_folder):
             os.mkdir(self.experiment_folder)
@@ -63,7 +64,12 @@ class Journal(object):
         if not os.path.isdir(type_folder):
             os.mkdir(type_folder)
 
-        with open(os.path.join(type_folder, 'data.json'), 'w') as fp:
+        if name is not None:
+            filename = '%s.json' % (name)
+        else:
+            filename = 'data.json'
+
+        with open(os.path.join(type_folder, filename), 'w') as fp:
             json.dump(analytics, fp, indent=4, sort_keys=True)
 
     def compile_results(self, epochs_between_validation: int, final_epochs: int):

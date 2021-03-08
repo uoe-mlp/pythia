@@ -142,7 +142,8 @@ class ChalvatzisPredictor(Predictor):
                 if (loop == loops - 1) and (epochs == epochs_between_validation):
                     pass
                 else:
-                    self.validate(loop, val_infra, Y_hat, X_in, Y_in, X_val_in, Y_val_in)
+                    last_epoch = loop * epochs_between_validation + epochs
+                    self.validate(loop, val_infra, Y_hat, X_in, Y_in, X_val_in, Y_val_in, last_epoch)
             # Compile all the results together
             if val_infra is not None:
                 journal = val_infra[4]
@@ -276,7 +277,7 @@ class ChalvatzisPredictor(Predictor):
     def attach_model(self, model) -> None:
         self.model.attach_model(model)
 
-    def validate(self, num, val_infra, prediction, X_train, Y_train, X_val, Y_val) -> None:
+    def validate(self, num, val_infra, prediction, X_train, Y_train, X_val, Y_val, last_epoch) -> None:
         agent = val_infra[0]
         market_execute = val_infra[1]
         timestamps = val_infra[2]
@@ -307,4 +308,4 @@ class ChalvatzisPredictor(Predictor):
             journal.store_fill(trade_fills)
             agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
 
-        journal.run_analytics('train_%d' % num, timestamps[train_num:train_num + val_num], Y_val, instruments)
+        journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, instruments, name=num, last_epoch=last_epoch)
