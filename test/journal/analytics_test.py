@@ -36,6 +36,6 @@ def test_analytics():
 
     assert analytics.maximum_drawdown == pytest.approx(-0.13, abs=0.001)
     assert analytics.volatility == pytest.approx(4.2621, abs=0.001)
-    assert analytics.cumulative_return == pytest.approx(30, abs=0.001)
+    assert analytics.cumulative_return == pytest.approx(29, abs=0.001)
     assert analytics.sharpe_ratio == pytest.approx(0.6260, abs=0.001)
     assert analytics.sortino_ratio == pytest.approx(35.5468, abs=0.001)
