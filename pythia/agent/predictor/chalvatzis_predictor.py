@@ -269,7 +269,7 @@ class ChalvatzisPredictor(Predictor):
     def attach_model(self, model) -> None:
         self.model.attach_model(model)
 
-    def validate(self, num, val_infra, prediction, X_train, Y_train, X_val, Y_val) -> None:
+    def validate(self, num, val_infra, prediction, X_train, Y_train, X_val, Y_val, last_epoch) -> None:
         agent = copy.deepcopy(val_infra[0])
         market_execute = val_infra[1]
         timestamps = val_infra[2]
