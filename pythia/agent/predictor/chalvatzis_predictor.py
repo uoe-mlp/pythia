@@ -1,11 +1,8 @@
 from __future__ import annotations
-from typing import Dict, Tuple, Dict, List, Any, Optional, Callable
-from abc import ABC, abstractclassmethod
+from typing import Dict, Tuple, Dict, List, Any, Optional
 import numpy as np
-from numpy.core.arrayprint import dtype_is_implied
 import tensorflow as tf
 import copy
-import os
 
 from pythia.utils import ArgsParser
 from pythia.agent.network import LSTMChalvatzisTF, OutputObserver
@@ -272,14 +269,14 @@ class ChalvatzisPredictor(Predictor):
         self.model.attach_model(model)
 
     def validate(self, num, val_infra, prediction, X_train, Y_train, X_val, Y_val) -> None:
-        agent = val_infra[0]
+        agent = copy.deepcopy(val_infra[0])
         market_execute = val_infra[1]
         timestamps = val_infra[2]
         instruments = val_infra[3]
-        journal = val_infra[4]
+        journal = copy.deepcopy(val_infra[4])
         train_num = val_infra[5]
         val_num = val_infra[6]
-        trader = val_infra[7]
+        trader = copy.deepcopy(val_infra[7])
 
         model_copy = self.copy_model()
         model = self.detach_model()
