@@ -140,7 +140,7 @@ class ChalvatzisPredictor(Predictor):
                     pass
                 else:
                     last_epoch = loop * epochs_between_validation + epochs
-                    self.validate(loop, val_infra, Y_hat, X_in, Y_in, X_val_in, Y_val_in, last_epoch)
+                    self.validate(loop, val_infra, Y_hat, last_epoch)
         else:
             self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
             # Predict
@@ -244,7 +244,7 @@ class ChalvatzisPredictor(Predictor):
         X_train = np.array([x,] * self.update_iter_per_item).transpose([1,0,2,3]).reshape([x.shape[0] * self.update_iter_per_item] + list(x.shape[1:]))
         Y_train = np.array([y,] * self.update_iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.update_iter_per_item] + list(y.shape[1:]))
 
-        self.model.fit(X_train, Y_train, batch_size=1)
+        self.model.fit(X_train, Y_train, batch_size=1, verbose=0)
 
     def detach_model(self) -> Any:
         m = self.model.detach_model()
@@ -269,7 +269,8 @@ class ChalvatzisPredictor(Predictor):
     def attach_model(self, model) -> None:
         self.model.attach_model(model)
 
-    def validate(self, num, val_infra, prediction, X_train, Y_train, X_val, Y_val, last_epoch) -> None:
+    def validate(self, num, val_infra, Y_hat, last_epoch) -> None:
+        print('Calculating validation within training...')
         agent = copy.deepcopy(val_infra[0])
         market_execute = val_infra[1]
         timestamps = val_infra[2]
@@ -277,13 +278,21 @@ class ChalvatzisPredictor(Predictor):
         journal = copy.deepcopy(val_infra[4])
         train_num = val_infra[5]
         val_num = val_infra[6]
-        trader = copy.deepcopy(val_infra[7])
+        X_train = val_infra[7].copy()
+        Y_train = val_infra[8].copy()
+        X_val = val_infra[9].copy()
+        Y_val = val_infra[10].copy()
+        trader = copy.deepcopy(val_infra[11])
 
         model_copy = self.copy_model()
         model = self.detach_model()
         predictor: Predictor = copy.deepcopy(self)
         self.attach_model(model)
         predictor.attach_model(model_copy)
+
+        if self.first_column_cash:
+            prediction, confidence = self.add_cash(Y_hat, Y_hat)
+
         trader.fit(prediction=prediction, conviction=prediction, Y=Y_train, predict_returns=predictor.predict_returns)
 
         agent.predictor = predictor

@@ -81,6 +81,10 @@ class StandardExperiment(Experiment):
                 copy.deepcopy(self.journal),
                 train_num,
                 val_num,
+                X_train,
+                Y_train,
+                X_val,
+                Y_val,
             ]
         else:
             val_infra = []
@@ -104,6 +108,7 @@ class StandardExperiment(Experiment):
         trade_orders_benchmark: Optional[List[TradeOrder]] = None
         trade_fills_benchmark: Optional[List[TradeFill]] = None
 
+        print('Calculating validation...')
         for i in range(val_num):
             idx = train_num + i
             timestamp = self.market.timestamps[idx]
@@ -128,6 +133,7 @@ class StandardExperiment(Experiment):
             self.benchmark_journal.clean()
             self.benchmark.clean_portfolio()
         
+        print('Calculating test...')
         for i in range(test_num):
             idx = train_num + val_num + i
             timestamp = self.market.timestamps[idx]
