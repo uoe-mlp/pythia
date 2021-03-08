@@ -130,7 +130,7 @@ class ChalvatzisPredictor(Predictor):
             loops = np.ceil(self.epochs / float(epochs_between_validation))
             for loop in range(int(loops)):
                 if loop == loops - 1:
-                    epochs: int = int(self.epochs - loops * epochs_between_validation)
+                    epochs: int = self.epochs - (loop * epochs_between_validation)
                 else:
                     epochs = int(epochs_between_validation)
                 self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
@@ -144,11 +144,6 @@ class ChalvatzisPredictor(Predictor):
                 else:
                     last_epoch = loop * epochs_between_validation + epochs
                     self.validate(loop, val_infra, Y_hat, X_in, Y_in, X_val_in, Y_val_in, last_epoch)
-            # Compile all the results together
-            if val_infra is not None:
-                journal = val_infra[4]
-                journal.compile_results(epochs_between_validation, self.epochs - loops * epochs_between_validation)
-
         else:
             self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
             # Predict

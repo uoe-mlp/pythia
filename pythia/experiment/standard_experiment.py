@@ -92,6 +92,9 @@ class StandardExperiment(Experiment):
             epochs_between_validation=self.epochs_between_validation,
             val_infra=val_infra)
 
+        if self.epochs_between_validation:
+            self.journal.compile_results(self.market.instruments)
+
         if self.benchmark:
             self.benchmark.fit(X_train, Y_train, X_val, Y_val, 
                 simulator=lambda orders, timestamp: self.market.simulate(orders, timestamp) 
