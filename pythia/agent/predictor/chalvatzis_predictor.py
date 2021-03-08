@@ -13,10 +13,10 @@ from .predictor import Predictor
 class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
-                 epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_col_cash: bool,
+                 epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_column_cash: bool,
                  initial_learning_rate: float, learning_rate_decay: float, batch_size: int, update_iter_per_item: int, 
                  loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
-        super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_col_cash)
+        super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_column_cash)
         
         self.window_size: int = window_size
         self.hidden_size: int = hidden_size
@@ -76,11 +76,11 @@ class ChalvatzisPredictor(Predictor):
         # all_hidden: bool = ArgsParser.get_or_default(params, 'all_hidden', True)
         all_hidden: bool = True
         predict_returns: bool = ArgsParser.get_or_default(params, 'predict_returns', False)
-        first_col_cash: bool = ArgsParser.get_or_default(params, 'first_col_cash', False)
+        first_column_cash: bool = ArgsParser.get_or_default(params, 'first_column_cash', False)
         window_size: int = ArgsParser.get_or_default(params, 'window_size', 5)
 
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
-            epochs=epochs, predict_returns=predict_returns, first_col_cash=first_col_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
+            epochs=epochs, predict_returns=predict_returns, first_column_cash=first_column_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             batch_size=batch_size, initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
             update_iter_per_item=update_iter_per_item)
 
