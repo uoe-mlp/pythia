@@ -30,7 +30,7 @@
                 "params": {
                     "first_column_cash": true,
                     "initial_learning_rate": 1e-4,  // VARIABLE [1e-3, 1e-4]
-                    "learning_rate_decay": 1, // VARIABLE [1, 0.99999]
+                    "learning_rate_decay": 1,
                     "epochs": 2000, // VARIABLE [1000, 2000]
                     "iter_per_item": 3,
                     "update_iter_per_item": 3,
