@@ -55,6 +55,10 @@ for ft in features_targets:
                             run_dir = os.path.join(grid_search_dir, "ft-%s_dp-%s_lr-%f_e-%i_hs-%i-%i_bs-%i_ws-%i" % (ft, dp[0], lr, e, hs[0], len(hs), bs, ws))
                             if not os.path.isdir(run_dir):
                                 os.mkdir(run_dir)
+                            
+                            # Set the output folder
+                            default_settings["analysis"]["folder"] = run_dir
+
 
                             with open(os.path.join(run_dir, "settings.json"), 'w') as fp:
                                 json.dump(default_settings, fp, indent=4, sort_keys=True)
