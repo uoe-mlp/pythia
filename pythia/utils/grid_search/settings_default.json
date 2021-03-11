@@ -3,20 +3,21 @@
         "type": "standard",
         "folder": "data/experiments/chalvatzis",
         "params": {
-            "train": 0.200,
+            "train": 0.666,
             "val": 0.134,
-            "test": 0.666
+            "test": 0.200,
+            "epochs_between_validation": 500
         }
     },
     "market": {
         "type": "live-daily-historical",
         "params": {
-            "features": ["SPY"],
-            "targets": ["SPY"],
-            "trading_cost": 0.0001,
+            "features": ["SPY"], // VARIABLE [["SPY", "IWM", "ONEQ"]]
+            "targets": ["SPY"], // VARIABLE [["SPY", "IWM", "ONEQ"]] (as above)
+            "trading_cost": 0,
             "source": "yahoo",
-            "start_date": "01-01-2005",
-            "end_date": "20-12-2019",
+            "start_date": "01-01-2005", // VARIABLE ["01-01-2004", "01-01-2005", "01-01-2006"]
+            "end_date": "20-12-2019", // VARIABLE ["20-12-2018", "20-12-2019", "20-12-2020"] (dependent on above)
             "feature_keys": ["Open", "High", "Low", "Close", "Adj Close", "Prev. Adj Close"],
             "target_keys": "Adj Close"
         }
@@ -28,16 +29,16 @@
                 "type": "chalvatzis",
                 "params": {
                     "first_column_cash": true,
-                    "initial_learning_rate": 1e-4, 
-                    "learning_rate_decay": 1,
-                    "epochs": 2000,
+                    "initial_learning_rate": 1e-4,  // VARIABLE [1e-3, 1e-4]
+                    "learning_rate_decay": 1, // VARIABLE [1, 0.99999]
+                    "epochs": 2000, // VARIABLE [1000, 2000]
                     "iter_per_item": 3,
-                    "update_iter_per_item": 20,
+                    "update_iter_per_item": 3,
                     "predict_returns": false,
-                    "window_size": 11,
+                    "window_size": 11, // VARIABLE [11, 22, 44]
                     "dropout": 0.5,
-                    "batch_size": 300,
-                    "hidden_size": [128, 128, 128],
+                    "batch_size": 300, // VARIABLE [100, 500]
+                    "hidden_size": [128, 128, 128], // VARIABLE [[32], [64, 64], [128, 128, 128]]
                     "normalize": {
                         "active": true,
                         "min": -1,
