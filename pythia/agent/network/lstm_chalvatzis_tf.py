@@ -34,7 +34,7 @@ class LSTMChalvatzisTF(object):
         super(LSTMChalvatzisTF, self).__init__()
         
         hidden_size_list: List[int] = hidden_size if isinstance(hidden_size, list) else [hidden_size]
-        dropout_list: List[float] = dropout if isinstance(dropout, list) else [dropout]
+        dropout_list: List[float] = dropout if isinstance(dropout, list) else [dropout for x in hidden_size_list]
 
         self.input_size: int = input_size
         self.hidden_size: List[int] = hidden_size_list
