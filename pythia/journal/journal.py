@@ -103,14 +103,13 @@ class Journal(object):
             ordered_metrics[i] = [last_epoch, cumulative_return, maximum_drawdown, number_of_trades,
                                 sharpe_ratio, sortino_ratio, volatility] + mean_directional_accuracy + correlation
 
-        sorted_dict = dict(sorted(ordered_metrics.items()))
 
         output_csv = os.path.join(train_folder, "output.csv")
         # Write to csv
         with open(output_csv, 'w+', newline='\n') as csv_file:
                 writer = csv.writer(csv_file, delimiter=',')
                 writer.writerow(all_metrics)
-                for k, v in sorted_dict.items():
+                for k, v in sorted(ordered_metrics.items()):
                     writer.writerow(v)
 
     def clean(self):        
