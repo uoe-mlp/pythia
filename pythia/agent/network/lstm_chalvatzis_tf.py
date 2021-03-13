@@ -68,7 +68,7 @@ class LSTMChalvatzisTF(object):
                     use_bias=True,
                     return_sequences=True,
                     kernel_initializer='glorot_uniform',
-                    dropout=d,
+                    dropout=0,
                     recurrent_dropout=0,
                     input_shape=(window_size, hidden_size_list[i-1])))
 
