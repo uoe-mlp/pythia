@@ -1,6 +1,7 @@
 from typing import List, Union, Optional, Callable, Any
 import tensorflow as tf
 import numpy as np
+from tensorflow.keras import regularizers
 
 
 class OutputObserver(tf.keras.callbacks.Callback):
@@ -31,9 +32,23 @@ class OutputObserver(tf.keras.callbacks.Callback):
         else:
             self.active = False
 
+class MaskedDense(tf.keras.layers.Layer):
+    def __init__(self, input_shape, output_shape, kernel_regularizer=None,  name=None):
+        super(MaskedDense, self).__init__(name=name)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.w = self.add_weight("kernel",
+                                  shape=[input_shape, output_shape],
+                                  regularizer=self.kernel_regularizer)
+        lengths = [int(i / (input_shape / output_shape))  for i in range(input_shape)]
+        self.mask = 1 - (tf.sequence_mask(lengths, output_shape, dtype=tf.dtypes.float32))
+
+    def __call__(self, x):
+        y = tf.matmul(x, tf.math.multiply(self.mask, self.w))
+        return y
+
 class LSTMChalvatzisTF(object):
 
-    def __init__(self, input_size: int, window_size: int, hidden_size: Union[int, List[int]], output_size: int, dropout: Union[float, List[float]], l2: float=0.0):
+    def __init__(self, input_size: int, window_size: int, hidden_size: Union[int, List[int]], output_size: int, dropout: Union[float, List[float]],  masked: bool, l2: float=0.0):
         super(LSTMChalvatzisTF, self).__init__()
         
         hidden_size_list: List[int] = hidden_size if isinstance(hidden_size, list) else [hidden_size]
@@ -45,6 +60,7 @@ class LSTMChalvatzisTF(object):
         self.window_size: int = window_size
         self.output_size: int = output_size
         self.l2: float = l2
+        self.masked: bool = masked
 
         self.seq_model = tf.keras.Sequential()
         self.seq_model.add(
@@ -77,8 +93,12 @@ class LSTMChalvatzisTF(object):
 
         reg = tf.keras.regularizers.L2(self.l2)
 
-        self.seq_model.add(tf.keras.layers.Dense(output_size * window_size, use_bias=False,
-                input_shape=(window_size * hidden_size_list[-1],), kernel_regularizer=reg))
+        if not self.masked:
+            self.seq_model.add(tf.keras.layers.Dense(output_size * window_size, use_bias=False,
+                    input_shape=(window_size * hidden_size_list[-1],), kernel_regularizer=reg))
+        else:
+            self.seq_model.add(MaskedDense(input_shape=(window_size * hidden_size_list[-1]),
+                    output_shape = output_size * window_size, kernel_regularizer=reg))
         self.seq_model.add(
             tf.keras.layers.Reshape((window_size, output_size),
                 input_shape=(output_size * window_size, 1,))

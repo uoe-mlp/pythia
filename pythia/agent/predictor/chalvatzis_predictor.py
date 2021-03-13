@@ -14,7 +14,7 @@ class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
                  epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_column_cash: bool,
-                 initial_learning_rate: float, learning_rate_decay: float, batch_size: int, update_iter_per_item: int, 
+                 initial_learning_rate: float, learning_rate_decay: float, batch_size: int, update_iter_per_item: int, masked: bool,
                  loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None, l2: float=0.0):
         super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_column_cash)
         
@@ -28,12 +28,13 @@ class ChalvatzisPredictor(Predictor):
         self.shuffle: bool = shuffle
         self.update_iter_per_item: int = update_iter_per_item
         self.normalize: bool = normalize
+        self.masked: bool = masked
         if self.normalize:
             self.normalize_min: float = normalize_min if normalize_min is not None else -1
             self.normalize_max: float = normalize_max if normalize_max is not None else 1
         self.model = LSTMChalvatzisTF(
             input_size=input_size, window_size=window_size, hidden_size=hidden_size, output_size=self.output_size,
-            dropout=dropout, l2=l2)
+            dropout=dropout, l2=l2, masked=masked)
         self.lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=initial_learning_rate,
             decay_steps=1,
@@ -61,6 +62,7 @@ class ChalvatzisPredictor(Predictor):
         update_iter_per_item: int = ArgsParser.get_or_default(params, 'update_iter_per_item', iter_per_item)
         l2: float = ArgsParser.get_or_default(params, 'l2', 0.0)
         normalize_dict: Dict[str, Any] = ArgsParser.get_or_default(params, 'normalize', {})
+        masked: bool = ArgsParser.get_or_default(params, 'masked', False)
         if normalize_dict:
             normalize: bool = ArgsParser.get_or_default(normalize_dict, 'active', False)
             if normalize:
@@ -83,7 +85,7 @@ class ChalvatzisPredictor(Predictor):
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
             epochs=epochs, predict_returns=predict_returns, first_column_cash=first_column_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             batch_size=batch_size, initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
-            update_iter_per_item=update_iter_per_item, l2=l2)
+            update_iter_per_item=update_iter_per_item, l2=l2, masked=masked)
 
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         """

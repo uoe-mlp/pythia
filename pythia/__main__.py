@@ -2,6 +2,7 @@
 from os.path import isfile
 import sys
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from pythia.experiment import ExperimentParser
 
