@@ -36,6 +36,7 @@
                     "update_iter_per_item": 3,
                     "predict_returns": false,
                     "window_size": 11,
+                    "l2": 0.01,
                     "dropout": 0.5,
                     "batch_size": 300,
                     "hidden_size": [128, 128, 128],
