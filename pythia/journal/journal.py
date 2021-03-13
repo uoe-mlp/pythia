@@ -1,3 +1,4 @@
+from os.path import isdir
 from typing import List, Optional, Tuple, Dict
 import os
 from pandas._libs.tslibs import Timestamp
@@ -84,33 +85,34 @@ class Journal(object):
         ordered_metrics: Dict = {}
 
         # Get list of all files
-        train_reports = [f for f in os.listdir(train_folder)]
-        for i, report in enumerate(train_reports):
-            subdir = os.path.join(train_folder, report)
-            with open(subdir, 'r') as fp:
-                data: Dict = json.load(fp)
+        if isdir(train_folder):
+            train_reports = [f for f in os.listdir(train_folder)]
+            for i, report in enumerate(train_reports):
+                subdir = os.path.join(train_folder, report)
+                with open(subdir, 'r') as fp:
+                    data: Dict = json.load(fp)
 
-            last_epoch = ArgsParser.get_or_default(data, 'last_epoch', None)
-            cumulative_return = ArgsParser.get_or_default(data, 'cumulative_return', None)
-            maximum_drawdown = ArgsParser.get_or_default(data, 'maximum_drawdown', None)
-            number_of_trades = ArgsParser.get_or_default(data, 'number_of_trades', None)
-            sharpe_ratio = ArgsParser.get_or_default(data, 'sharpe_ratio', None)
-            sortino_ratio = ArgsParser.get_or_default(data, 'sortino_ratio', None)
-            volatility = ArgsParser.get_or_default(data, 'volatility', None)
-            mean_directional_accuracy = ArgsParser.get_or_default(data, 'mean_directional_accuracy', [None for instr in instruments])
-            correlation = ArgsParser.get_or_default(data, 'correlation', [None for instr in instruments])
+                last_epoch = ArgsParser.get_or_default(data, 'last_epoch', None)
+                cumulative_return = ArgsParser.get_or_default(data, 'cumulative_return', None)
+                maximum_drawdown = ArgsParser.get_or_default(data, 'maximum_drawdown', None)
+                number_of_trades = ArgsParser.get_or_default(data, 'number_of_trades', None)
+                sharpe_ratio = ArgsParser.get_or_default(data, 'sharpe_ratio', None)
+                sortino_ratio = ArgsParser.get_or_default(data, 'sortino_ratio', None)
+                volatility = ArgsParser.get_or_default(data, 'volatility', None)
+                mean_directional_accuracy = ArgsParser.get_or_default(data, 'mean_directional_accuracy', [None for instr in instruments])
+                correlation = ArgsParser.get_or_default(data, 'correlation', [None for instr in instruments])
 
-            ordered_metrics[i] = [last_epoch, cumulative_return, maximum_drawdown, number_of_trades,
-                                sharpe_ratio, sortino_ratio, volatility] + mean_directional_accuracy + correlation
+                ordered_metrics[i] = [last_epoch, cumulative_return, maximum_drawdown, number_of_trades,
+                                    sharpe_ratio, sortino_ratio, volatility] + mean_directional_accuracy + correlation
 
 
-        output_csv = os.path.join(train_folder, "output.csv")
-        # Write to csv
-        with open(output_csv, 'w+', newline='\n') as csv_file:
-                writer = csv.writer(csv_file, delimiter=',')
-                writer.writerow(all_metrics)
-                for k, v in sorted(ordered_metrics.items()):
-                    writer.writerow(v)
+            output_csv = os.path.join(train_folder, "output.csv")
+            # Write to csv
+            with open(output_csv, 'w+', newline='\n') as csv_file:
+                    writer = csv.writer(csv_file, delimiter=',')
+                    writer.writerow(all_metrics)
+                    for k, v in sorted(ordered_metrics.items()):
+                        writer.writerow(v)
 
     def clean(self):        
         self.open_orders = []
