@@ -78,7 +78,7 @@ class LSTMChalvatzisTF(object):
         reg = tf.keras.regularizers.L2(self.l2)
 
         self.seq_model.add(tf.keras.layers.Dense(output_size * window_size, use_bias=False,
-                input_shape=(input_size * hidden_size_list[-1],), kernel_regularizer=reg))
+                input_shape=(window_size * hidden_size_list[-1],), kernel_regularizer=reg))
         self.seq_model.add(
             tf.keras.layers.Reshape((window_size, output_size),
                 input_shape=(output_size * window_size, 1,))
