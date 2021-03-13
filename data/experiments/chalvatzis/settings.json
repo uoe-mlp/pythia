@@ -3,9 +3,10 @@
         "type": "standard",
         "folder": "data/experiments/chalvatzis",
         "params": {
-            "train": 0.200,
+            "train": 0.666,
             "val": 0.134,
-            "test": 0.666
+            "test": 0.200,
+            "epochs_between_validation": 500
         }
     },
     "market": {
@@ -13,7 +14,7 @@
         "params": {
             "features": ["SPY"],
             "targets": ["SPY"],
-            "trading_cost": 0.0001,
+            "trading_cost": 0,
             "source": "yahoo",
             "start_date": "01-01-2005",
             "end_date": "20-12-2019",
@@ -28,15 +29,16 @@
                 "type": "chalvatzis",
                 "params": {
                     "first_column_cash": true,
-                    "initial_learning_rate": 1e-4, 
+                    "initial_learning_rate": 1e-4,
                     "learning_rate_decay": 1,
                     "epochs": 2000,
                     "iter_per_item": 3,
-                    "update_iter_per_item": 20,
+                    "update_iter_per_item": 3,
                     "predict_returns": false,
                     "window_size": 11,
+                    "l2": 0.01,
                     "dropout": 0.5,
-                    "batch_size": 300,
+                    "batch_size": 1,
                     "hidden_size": [128, 128, 128],
                     "normalize": {
                         "active": true,
@@ -47,6 +49,23 @@
             },
             "trader": {
                 "type": "chalvatzis",
+                "params": {
+                    "first_column_cash": true
+                }
+            }
+        }
+    },
+    "benchmark": {
+        "type": "supervised",
+        "params": {
+            "predictor": {
+                "type": "flat",
+                "params": {
+                    "first_column_cash": true
+                }
+            },
+            "trader": {
+                "type": "buy_and_hold",
                 "params": {
                     "first_column_cash": true
                 }
