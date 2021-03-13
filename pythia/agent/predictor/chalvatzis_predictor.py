@@ -137,9 +137,7 @@ class ChalvatzisPredictor(Predictor):
                 Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
                 if self.normalize:
                     Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
-                if (loop == loops - 1) and (epochs == epochs_between_validation):
-                    pass
-                else:
+                if (loop != loops - 1):
                     last_epoch = loop * epochs_between_validation + epochs
                     self.validate(loop, val_infra, Y_hat, last_epoch)
         else:
@@ -272,7 +270,7 @@ class ChalvatzisPredictor(Predictor):
         self.model.attach_model(model)
 
     def validate(self, num, val_infra, Y_hat, last_epoch) -> None:
-        print('Calculating validation within training...')
+        print('Calculating validation within training...', end="\r")
         agent = copy.deepcopy(val_infra[0])
         market_execute = val_infra[1]
         timestamps = val_infra[2]
@@ -310,5 +308,9 @@ class ChalvatzisPredictor(Predictor):
             trade_fills = market_execute(trade_orders, timestamp)
             journal.store_fill(trade_fills)
             agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
+            printed_string = 'Calculating validation within training... Completed: %.1f %%' % (100 * (i + 1) / val_num)
+            print (printed_string, end="\r")
+        
+        print ('Calculating validation within training... Completed!')
 
         journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, instruments, name=num, last_epoch=last_epoch)

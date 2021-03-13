@@ -108,7 +108,7 @@ class StandardExperiment(Experiment):
         trade_orders_benchmark: Optional[List[TradeOrder]] = None
         trade_fills_benchmark: Optional[List[TradeFill]] = None
 
-        print('Calculating validation...')
+        print('Calculating validation...', end="\r")
         for i in range(val_num):
             idx = train_num + i
             timestamp = self.market.timestamps[idx]
@@ -124,6 +124,11 @@ class StandardExperiment(Experiment):
                 trade_fills_benchmark = self.market.execute(trade_orders_benchmark, timestamp)
                 self.benchmark_journal.store_fill(trade_fills_benchmark)
                 self.benchmark.update(trade_fills_benchmark, X[:idx + 1, :], Y[:idx + 2, :])
+            
+            printed_string = 'Calculating validation... Completed: %.1f %%' % (100 * (i + 1) / val_num)
+            print (printed_string, end="\r")
+
+        print ('Calculating validation... Completed!')
 
         self.journal.run_analytics('validation', self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
         self.journal.clean()
@@ -133,7 +138,7 @@ class StandardExperiment(Experiment):
             self.benchmark_journal.clean()
             self.benchmark.clean_portfolio()
         
-        print('Calculating test...')
+        print('Calculating test...', end="\r")
         for i in range(test_num):
             idx = train_num + val_num + i
             timestamp = self.market.timestamps[idx]
@@ -149,7 +154,12 @@ class StandardExperiment(Experiment):
                 trade_fills_benchmark = self.market.execute(trade_orders_benchmark, timestamp)
                 self.benchmark_journal.store_fill(trade_fills_benchmark)
                 self.benchmark.update(trade_fills_benchmark, X[:idx + 1, :], Y[:idx + 2, :])
+            
+            printed_string = 'Calculating test... Completed: %.1f %%' % (100 * (i + 1) / test_num)
+            print (printed_string, end="\r")
         
+        print ('Calculating test... Completed!')
+
         self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test, self.market.instruments)
         if self.benchmark:
             self.benchmark_journal.run_analytics(os.path.join('test', 'benchmark'), self.market.timestamps[train_num + val_num:], Y_test, self.market.instruments)
