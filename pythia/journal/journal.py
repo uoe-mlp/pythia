@@ -40,7 +40,7 @@ class Journal(object):
                 raise ValueError('One and only one open order should match the id for this fill.')
 
     def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, **kwargs):
-        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions)
+        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions, instruments)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
             'direction': x.direction,

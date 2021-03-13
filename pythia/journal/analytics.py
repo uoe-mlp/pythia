@@ -11,7 +11,7 @@ from .trade_fill import TradeFill
 class Analytics(object):
 
     def __init__(self, timeseries: pd.Series, volatility: float, cumulative_return: float, sharpe_ratio: float, sortino_ratio: float, maximum_drawdown: float,
-        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray]):
+        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray], predictions: pd.DataFrame):
         self.timeseries: pd.Series = timeseries
         self.volatility: float = volatility
         self.cumulative_return: float = cumulative_return
@@ -20,9 +20,10 @@ class Analytics(object):
         self.maximum_drawdown: float = maximum_drawdown
         self.correlation: Optional[np.ndarray] = correlation
         self.mean_directional_accuracy: Optional[np.ndarray] = mean_directional_accuracy
+        self.predictions: pd.DataFrame = predictions
 
     @staticmethod
-    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, predictions: Optional[Dict[Timestamp, np.ndarray]]) -> Analytics:
+    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, predictions: Optional[Dict[Timestamp, np.ndarray]], instruments: List[str]) -> Analytics:
         holdings_df = pd.DataFrame(prices * 0, index=timestamps).astype('float')
         holdings_df.iloc[0, 0] = 1      # Initially, all in the first asset (cash)
 
@@ -50,6 +51,8 @@ class Analytics(object):
             real_ret = real_ret[~missing, :]
             mda = np.nanmean((exp_ret >= 0) == (real_ret >= 0), axis=0)
             correlation = [None if np.ma.is_masked(np.ma.corrcoef(x, y)[1,0]) else np.ma.corrcoef(x, y)[1,0] for x, y in zip(exp_ret.T, real_ret.T)]
+            p_df.columns = instruments
+            p_df.dropna(inplace=True)
             
         return Analytics(
             timeseries,
@@ -59,7 +62,8 @@ class Analytics(object):
             sortino_ratio=Analytics.calculate_sortino_ratio(timeseries),
             maximum_drawdown=Analytics.calculate_maximum_drawdonw(timeseries),
             correlation=None if not predictions else correlation,
-            mean_directional_accuracy=None if not predictions else mda)
+            mean_directional_accuracy=None if not predictions else mda, 
+            predictions=None if not predictions else p_df)
 
     @staticmethod
     def timeseries2returns(timeseries: pd.Series) -> pd.Series:
@@ -104,5 +108,10 @@ class Analytics(object):
         data['maximum_drawdown'] = self.maximum_drawdown
         data['correlation'] = self.correlation
         data['mean_directional_accuracy'] = self.mean_directional_accuracy.tolist() if self.mean_directional_accuracy is not None else None
+        data['predictions'] = {
+            name: {
+                'values': series.to_list(), 
+                'dates': [x.strftime('%Y-%m-%d') for x in series.index.tolist()]}
+            for name, series in self.predictions.iteritems()} if self.predictions is not None else None
 
         return data
