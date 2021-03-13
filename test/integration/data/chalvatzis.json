@@ -36,6 +36,7 @@
                     "predict_returns": false,
                     "window_size": 22,
                     "dropout": 0.5,
+                    "l2": 0.01,
                     "hidden_size": [10, 10],
                     "normalize": {
                         "active": true,

@@ -8,20 +8,23 @@ class OutputObserver(tf.keras.callbacks.Callback):
     callback to observe the output of the network
     """
 
-    def __init__(self, model, X_train, Y_hat, epochs):
+    def __init__(self, model, X_train, Y_hat, epochs, batch_size):
         self.model = model.seq_model
         self.X_train = X_train
         self.Y_hat: np.ndarray = Y_hat if isinstance(Y_hat, np.ndarray) else Y_hat.numpy()
         self.batch_num = 0
         self.epochs = epochs
         self.active = False
+        self.batch_size: int = batch_size
 
     def on_batch_end(self, epoch, logs={}):
         if self.active:
-            self.Y_hat[self.batch_num : self.batch_num + 1, :, :] = self.model.predict(self.X_train[self.batch_num : self.batch_num + 1, :, :])
+            i_from = self.batch_num * self.batch_size
+            i_to = min((self.batch_num + 1) * self.batch_size, self.Y_hat.shape[0])
+            self.Y_hat[i_from : i_to, :, :] = self.model.predict(self.X_train[i_from : i_to, :, :])
             self.batch_num += 1
 
-    def on_epoch_start(self, epoch, logs={}):
+    def on_epoch_begin(self, epoch, logs={}):
         if epoch == self.epochs - 1:
             self.batch_num = 0
             self.active = True
@@ -30,7 +33,7 @@ class OutputObserver(tf.keras.callbacks.Callback):
 
 class LSTMChalvatzisTF(object):
 
-    def __init__(self, input_size: int, window_size: int, hidden_size: Union[int, List[int]], output_size: int, dropout: Union[float, List[float]]):
+    def __init__(self, input_size: int, window_size: int, hidden_size: Union[int, List[int]], output_size: int, dropout: Union[float, List[float]], l2: float=0.0):
         super(LSTMChalvatzisTF, self).__init__()
         
         hidden_size_list: List[int] = hidden_size if isinstance(hidden_size, list) else [hidden_size]
@@ -41,6 +44,7 @@ class LSTMChalvatzisTF(object):
         self.dropout: List[float] = dropout_list
         self.window_size: int = window_size
         self.output_size: int = output_size
+        self.l2: float = l2
 
         self.seq_model = tf.keras.Sequential()
         self.seq_model.add(
@@ -70,8 +74,11 @@ class LSTMChalvatzisTF(object):
 
         self.seq_model.add(tf.keras.layers.Flatten(
                 input_shape=(window_size, hidden_size_list[-1])))
-        self.seq_model.add(tf.keras.layers.Dense(output_size * window_size, 
-                input_shape=(input_size * hidden_size_list[-1],)))
+
+        reg = tf.keras.regularizers.L2(self.l2)
+
+        self.seq_model.add(tf.keras.layers.Dense(output_size * window_size, use_bias=False,
+                input_shape=(input_size * hidden_size_list[-1],), kernel_regularizer=reg))
         self.seq_model.add(
             tf.keras.layers.Reshape((window_size, output_size),
                 input_shape=(output_size * window_size, 1,))

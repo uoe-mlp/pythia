@@ -15,7 +15,7 @@ class ChalvatzisPredictor(Predictor):
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
                  epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_column_cash: bool,
                  initial_learning_rate: float, learning_rate_decay: float, batch_size: int, update_iter_per_item: int, 
-                 loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None):
+                 loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None, l2: float=0.0):
         super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_column_cash)
         
         self.window_size: int = window_size
@@ -33,7 +33,7 @@ class ChalvatzisPredictor(Predictor):
             self.normalize_max: float = normalize_max if normalize_max is not None else 1
         self.model = LSTMChalvatzisTF(
             input_size=input_size, window_size=window_size, hidden_size=hidden_size, output_size=self.output_size,
-            dropout=dropout)
+            dropout=dropout, l2=l2)
         self.lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=initial_learning_rate,
             decay_steps=1,
@@ -59,6 +59,7 @@ class ChalvatzisPredictor(Predictor):
         initial_learning_rate: float = ArgsParser.get_or_default(params, 'initial_learning_rate', 0.001)
         batch_size: int = ArgsParser.get_or_default(params, 'batch_size', 1)
         update_iter_per_item: int = ArgsParser.get_or_default(params, 'update_iter_per_item', iter_per_item)
+        l2: float = ArgsParser.get_or_default(params, 'l2', 0.0)
         normalize_dict: Dict[str, Any] = ArgsParser.get_or_default(params, 'normalize', {})
         if normalize_dict:
             normalize: bool = ArgsParser.get_or_default(normalize_dict, 'active', False)
@@ -82,7 +83,7 @@ class ChalvatzisPredictor(Predictor):
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
             epochs=epochs, predict_returns=predict_returns, first_column_cash=first_column_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             batch_size=batch_size, initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
-            update_iter_per_item=update_iter_per_item)
+            update_iter_per_item=update_iter_per_item, l2=l2)
 
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         """
@@ -122,7 +123,6 @@ class ChalvatzisPredictor(Predictor):
         X_train = tf.convert_to_tensor(X_train, dtype=tf.dtypes.float32)
         Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
-        obs = OutputObserver(self.model, X_train, Y_train, self.epochs)
         if (epochs_between_validation is not None):
             loops = np.ceil(self.epochs / float(epochs_between_validation))
             for loop in range(int(loops)):
@@ -130,6 +130,7 @@ class ChalvatzisPredictor(Predictor):
                     epochs: int = self.epochs - (loop * epochs_between_validation)
                 else:
                     epochs = int(epochs_between_validation)
+                obs = OutputObserver(self.model, X_train, Y_train * 0, epochs, self.batch_size)
                 self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
 
                 # Predict
@@ -142,6 +143,7 @@ class ChalvatzisPredictor(Predictor):
                     last_epoch = loop * epochs_between_validation + epochs
                     self.validate(loop, val_infra, Y_hat, last_epoch)
         else:
+            obs = OutputObserver(self.model, X_train, Y_train * 0, self.epochs, self.batch_size)
             self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
             # Predict
             Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
