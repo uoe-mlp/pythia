@@ -39,7 +39,7 @@
                     "l2": 0.01,
                     "dropout": 0.5,
                     "batch_size": 100,
-                    "hidden_size": [128, 128, 128],
+                    "hidden_size": [128, 128],
                     "normalize": {
                         "active": true,
                         "min": -0.1,
