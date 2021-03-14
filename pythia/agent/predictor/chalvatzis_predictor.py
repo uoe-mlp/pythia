@@ -255,7 +255,7 @@ class ChalvatzisPredictor(Predictor):
     def copy_model(self) -> Any:
         model = LSTMChalvatzisTF(
             input_size=self.input_size, window_size=self.window_size, hidden_size=self.hidden_size, output_size=self.output_size,
-            dropout=self.dropout)
+            dropout=self.dropout, masked=self.masked)
         lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=self.lr_schedule.initial_learning_rate,
             decay_steps=1,
