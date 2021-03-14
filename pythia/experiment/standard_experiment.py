@@ -21,12 +21,14 @@ class StandardExperiment(Experiment):
 
     DEFAULT_SPLIT: List[float] = [0.7, 0.15, 0.15]
 
-    def __init__(self, path: str, market: Market, agent: Agent, journal: Journal, benchmark: Optional[Agent], settings: Dict, train: float, val: float, test: float, epochs_between_validation: Optional[int]):
+    def __init__(self, path: str, market: Market, agent: Agent, journal: Journal, benchmark: Optional[Agent], settings: Dict, 
+    train: float, val: float, test: float, epochs_between_validation: Optional[int], retrain_before_test: bool):
         super(StandardExperiment, self).__init__(path, market, agent, journal, benchmark, settings)
         self.train: float = train
         self.val: float = val
         self.test: float = test
         self.epochs_between_validation: Optional[int] = epochs_between_validation
+        self.retrain_before_test: bool = retrain_before_test
 
     @staticmethod
     def initialise(path: str, market: Market, agent: Agent, journal: Journal, benchmark: Optional[Agent], settings: Dict, params: Dict=None) -> Experiment:
@@ -35,6 +37,7 @@ class StandardExperiment(Experiment):
         val: Optional[float] = ArgsParser.get_or_default(p, 'val', None)
         test: Optional[float] = ArgsParser.get_or_default(p, 'test', None)
         epochs_between_validation: Optional[int] = ArgsParser.get_or_default(p, 'epochs_between_validation', None)
+        retrain_before_test: bool = ArgsParser.get_or_default(p, 'retrain_before_test', False)
 
         fractions: List[Optional[float]] = [train, val, test]
 
@@ -55,7 +58,7 @@ class StandardExperiment(Experiment):
             clean_fractions = cast(List[float], fractions) 
 
         return StandardExperiment(path, market, agent, journal, benchmark, settings, train=clean_fractions[0], val=clean_fractions[1], test=clean_fractions[2],
-            epochs_between_validation=epochs_between_validation)
+            epochs_between_validation=epochs_between_validation, retrain_before_test=retrain_before_test)
 
     def run(self):
         X = self.market.X
@@ -138,6 +141,18 @@ class StandardExperiment(Experiment):
             self.benchmark_journal.clean()
             self.benchmark.clean_portfolio()
         
+        if self.retrain_before_test:
+            print('Retraining before test...')        
+            
+            X_non_test = X[:train_num+val_num, :]
+            Y_non_test = Y[:train_num+val_num, :]
+
+            self.agent.fit(X_non_test, Y_non_test, X_non_test, Y_non_test, 
+            simulator=lambda orders, timestamp: self.market.simulate(orders, timestamp) 
+            if timestamp <= self.market.timestamps[train_num + val_num - 1] 
+            else ValueError('Date is out of traning or validation period.'),
+            epochs_between_validation=None)
+
         print('Calculating test...', end="\r")
         for i in range(test_num):
             idx = train_num + val_num + i
