@@ -105,7 +105,7 @@ class ChalvatzisTrader(Trader):
                     if first_negative > 0:
                         # Magic of compounding
                         ret = np.prod(1 + real_ret[:first_negative]) - 1
-                        
+
                         # Find return bucket
                         first_out = (exp_ret[0] >= self.bins[:, asset_i]).argmin(axis=0)
                         # Add cumulative return to return bucket
@@ -116,8 +116,8 @@ class ChalvatzisTrader(Trader):
         }
 
     def update_policy(self, X: np.ndarray, Y: np.ndarray, prediction: np.ndarray, conviction: np.ndarray, predict_returns: bool) -> None:
+        previous_prices = Y[-2, :]
         if not predict_returns:
-            previous_prices = Y[-2, :]
             prediction = prediction / previous_prices - 1
         
         expected_returns = prediction
