@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, Tuple, Dict, List, Any, Optional
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import copy
 
@@ -310,9 +311,10 @@ class ChalvatzisPredictor(Predictor):
             trade_fills = market_execute(trade_orders, timestamp)
             journal.store_fill(trade_fills)
             agent.update(trade_fills, X[:idx + 1, :], Y[:idx + 2, :])
-            printed_string = 'Calculating validation within training... Completed: %.1f %%' % (100 * (i + 1) / val_num)
+            printed_string = 'Calculating validation within training... Progress: %.1f %%' % (100 * (i + 1) / val_num)
             print (printed_string, end="\r")
         
-        print ('Calculating validation within training... Completed!')
+        print('Calculating validation within training... Progress: %.1f %% - Completed!' % (100 * (i + 1) / val_num))
 
-        journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, instruments, name=num, last_epoch=last_epoch)
+        journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, instruments, name=num, last_epoch=last_epoch, 
+            training_predictions=pd.DataFrame(data=prediction, index=timestamps[self.window_size-1:train_num]))

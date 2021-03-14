@@ -125,10 +125,10 @@ class StandardExperiment(Experiment):
                 self.benchmark_journal.store_fill(trade_fills_benchmark)
                 self.benchmark.update(trade_fills_benchmark, X[:idx + 1, :], Y[:idx + 2, :])
             
-            printed_string = 'Calculating validation... Completed: %.1f %%' % (100 * (i + 1) / val_num)
+            printed_string = 'Calculating validation... Progress: %.1f %%' % (100 * (i + 1) / val_num)
             print (printed_string, end="\r")
 
-        print ('Calculating validation... Completed!')
+        print('Calculating validation... Progress: %.1f %% - Completed!' % (100 * (i + 1) / val_num))
 
         self.journal.run_analytics('validation', self.market.timestamps[train_num:train_num + val_num], Y_val, self.market.instruments)
         self.journal.clean()
@@ -155,10 +155,10 @@ class StandardExperiment(Experiment):
                 self.benchmark_journal.store_fill(trade_fills_benchmark)
                 self.benchmark.update(trade_fills_benchmark, X[:idx + 1, :], Y[:idx + 2, :])
             
-            printed_string = 'Calculating test... Completed: %.1f %%' % (100 * (i + 1) / test_num)
+            printed_string = 'Calculating test... Progress: %.1f %%' % (100 * (i + 1) / test_num)
             print (printed_string, end="\r")
         
-        print ('Calculating test... Completed!')
+        print('Calculating test... Progress: %.1f %% - Completed!' % (100 * (i + 1) / test_num))
 
         self.journal.run_analytics('test', self.market.timestamps[train_num + val_num:], Y_test, self.market.instruments)
         if self.benchmark:

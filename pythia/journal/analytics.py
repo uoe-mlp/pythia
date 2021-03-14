@@ -11,7 +11,7 @@ from .trade_fill import TradeFill
 class Analytics(object):
 
     def __init__(self, timeseries: pd.Series, volatility: float, cumulative_return: float, sharpe_ratio: float, sortino_ratio: float, maximum_drawdown: float,
-        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray], predictions: pd.DataFrame):
+        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray], predictions: pd.DataFrame, training_predictions: Optional[pd.DataFrame]):
         self.timeseries: pd.Series = timeseries
         self.volatility: float = volatility
         self.cumulative_return: float = cumulative_return
@@ -21,9 +21,10 @@ class Analytics(object):
         self.correlation: Optional[np.ndarray] = correlation
         self.mean_directional_accuracy: Optional[np.ndarray] = mean_directional_accuracy
         self.predictions: pd.DataFrame = predictions
+        self.training_predictions: Optional[pd.DataFrame] = training_predictions if training_predictions is not None else None
 
     @staticmethod
-    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, predictions: Optional[Dict[Timestamp, np.ndarray]], instruments: List[str]) -> Analytics:
+    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, predictions: Optional[Dict[Timestamp, np.ndarray]], instruments: List[str], training_predictions: Optional[pd.DataFrame]=None) -> Analytics:
         holdings_df = pd.DataFrame(prices * 0, index=timestamps).astype('float')
         holdings_df.iloc[0, 0] = 1      # Initially, all in the first asset (cash)
 
@@ -54,6 +55,9 @@ class Analytics(object):
             p_df.columns = instruments
             p_df.dropna(inplace=True)
             
+        if training_predictions is not None:
+            training_predictions.columns = instruments
+
         return Analytics(
             timeseries,
             cumulative_return=timeseries.iloc[-1] - 1, 
@@ -63,7 +67,8 @@ class Analytics(object):
             maximum_drawdown=Analytics.calculate_maximum_drawdonw(timeseries),
             correlation=None if not predictions else correlation,
             mean_directional_accuracy=None if not predictions else mda, 
-            predictions=None if not predictions else p_df)
+            predictions=None if not predictions else p_df,
+            training_predictions=training_predictions if training_predictions is not None else None)
 
     @staticmethod
     def timeseries2returns(timeseries: pd.Series) -> pd.Series:
@@ -113,5 +118,11 @@ class Analytics(object):
                 'values': series.to_list(), 
                 'dates': [x.strftime('%Y-%m-%d') for x in series.index.tolist()]}
             for name, series in self.predictions.iteritems()} if self.predictions is not None else None
+
+        data['training_predictions'] = {
+            name: {
+                'values': series.to_list(), 
+                'dates': [x.strftime('%Y-%m-%d') for x in series.index.tolist()]}
+            for name, series in self.training_predictions.iteritems()} if self.training_predictions is not None else None
 
         return data

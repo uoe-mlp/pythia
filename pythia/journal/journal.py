@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple, Dict
 import os
 from pandas._libs.tslibs import Timestamp
 import numpy as np
+import pandas as pd
 from datetime import datetime
 import json
 import copy
@@ -40,8 +41,8 @@ class Journal(object):
             else:
                 raise ValueError('One and only one open order should match the id for this fill.')
 
-    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, **kwargs):
-        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions, instruments)
+    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, training_predictions: Optional[pd.DataFrame]=None, **kwargs):
+        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions, instruments, training_predictions=training_predictions)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
             'direction': x.direction,
