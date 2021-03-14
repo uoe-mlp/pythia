@@ -103,7 +103,7 @@ class ChalvatzisPredictor(Predictor):
     def prepare_features(self, X: np.ndarray, predict=False) -> np.ndarray:
         if predict:
             if self.consume_returns:
-                return (X[1:-1,:] / X[:-2,:] - 1).copy()
+                return (X[1:,:] / X[:-1,:] - 1).copy()
             else:
                 return X.copy()
         else:
@@ -126,9 +126,9 @@ class ChalvatzisPredictor(Predictor):
 
         s = X.shape[0]
         if self.consume_returns:
-            s +=1
+            s -=1
         if self.predict_returns:
-            s +=1
+            s -=1
             
         splits = [s]
         if X_val is not None and Y_val is not None:

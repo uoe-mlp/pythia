@@ -6,8 +6,7 @@
             "train": 0.666,
             "val": 0.200,
             "test": 0.134,
-            "epochs_between_validation": 50,
-            "retrain_before_test": false
+            "epochs_between_validation": 100
         }
     },
     "market": {
@@ -32,16 +31,17 @@
                     "first_column_cash": true,
                     "initial_learning_rate": 1e-4,
                     "learning_rate_decay": 1,
-                    "epochs": 10,
+                    "epochs": 2000,
                     "iter_per_item": 1,
                     "update_iter_per_item": 1,
                     "predict_returns": true,
+                    "consume_returns": true,
                     "window_size": 20,
                     "l2": 0.01,
                     "dropout": 0.5,
-                    "update_rolling_window": 50, 
+                    "update_rolling_window": 100, 
                     "batch_size": 100,
-                    "hidden_size": [32, 32],
+                    "hidden_size": [128, 128, 128],
                     "normalize": {
                         "active": true,
                         "min": -0.1,
