@@ -68,7 +68,5 @@ def run(target):
                                 subprocess.run(["python", "pythia", "--run", os.path.join(run_dir, "settings.json")])
 
 if __name__ == '__main__':
-    # test1.py executed as script
-    # do something
     run(sys.argv[1])
 
