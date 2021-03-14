@@ -32,7 +32,7 @@ def test_analytics():
         [1, 10, 3],
     ])
 
-    analytics = Analytics.initialise(timestamps=timestamps,fills=fills,prices=prices, predictions=None)
+    analytics = Analytics.initialise(timestamps=timestamps,fills=fills,prices=prices, predictions=None, instruments=['a','b','c'])
 
     assert analytics.maximum_drawdown == pytest.approx(-0.13, abs=0.001)
     assert analytics.volatility == pytest.approx(4.2621, abs=0.001)
