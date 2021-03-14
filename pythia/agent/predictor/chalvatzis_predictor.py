@@ -11,44 +11,6 @@ from pythia.agent.network import LSTMChalvatzisTF, OutputObserver
 from .predictor import Predictor
 
 
-class LastMSE(tf.keras.metrics.Metric):
-
-    def __init__(self, name='last_mse', **kwargs):
-        super(LastMSE, self).__init__(name=name, **kwargs)
-        self.total_count = self.add_weight("total_count", initializer='zeros')
-        self.total_sq_sum = self.add_weight("total_sq_sum", initializer='zeros')
-
-    def update_state(self, y_true, y_pred, sample_weight=None):
-        last_y_true = y_true[:,-1,:]
-        last_y_pred = y_pred[:,-1,:]
-        partial_sum = tf.reduce_sum(tf.square(last_y_pred - last_y_true))
-        self.total_sq_sum.assign_add(partial_sum)
-        self.total_count.assign_add(tf.cast(len(last_y_true), tf.float32))
-        
-    def result(self):
-      return tf.math.divide_no_nan(self.total_sq_sum, self.total_count)
-
-
-class LastMDA(tf.keras.metrics.Metric):
-
-    def __init__(self, name="direction_accuracy", dtype=None, **kwargs):
-        super(LastMDA, self).__init__(name=name, dtype=dtype, **kwargs)
-        self.total_count = self.add_weight("total_count", initializer='zeros')
-        self.match_count = self.add_weight("match_count", initializer='zeros')
-        self.direction_matches = self.add_weight("direction_matches", initializer='zeros')
-
-    def update_state(self, y_true, y_pred, sample_weight=None):
-        last_y_true = y_true[:,-1,:]
-        last_y_pred = y_pred[:,-1,:]
-        self.direction_matches = tf.math.multiply(last_y_true, last_y_pred)
-        count_result = tf.cast(tf.reduce_sum(tf.cast(tf.greater_equal(self.direction_matches, 0.), tf.float32)), tf.float32)
-        self.match_count.assign_add(count_result)
-        self.total_count.assign_add(tf.cast(len(last_y_true), tf.float32))
-        
-    def result(self):
-      return tf.math.divide_no_nan(self.match_count, self.total_count)
-
-
 class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
@@ -85,10 +47,7 @@ class ChalvatzisPredictor(Predictor):
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         self.loss: str = loss
-        metrics = ['mae', LastMSE()]
-        if self.predict_returns:
-            metrics.append(LastMDA())
-        self.model.compile(self.optimizer, self.loss, metrics)
+        self.model.compile(self.optimizer, self.loss, ['mae'])
 
     @property
     def last_hidden(self) -> bool:
@@ -136,19 +95,20 @@ class ChalvatzisPredictor(Predictor):
 
     def prepare_prices(self, Y: np.ndarray) -> np.ndarray:
         partial = super().prepare_prices(Y)
-        if self.consume_returns:
-            return partial[1:,:].copy()
-        return partial
+        if not self.consume_returns:
+            return partial
+        else:
+            return partial[1:, :].copy()
 
     def prepare_features(self, X: np.ndarray, predict=False) -> np.ndarray:
         if predict:
             if self.consume_returns:
-                return (X[1:,:] / X[:-1,:] - 1).copy()
+                return (X[1:-1,:] / X[:-2,:] - 1).copy()
             else:
                 return X.copy()
         else:
             if self.consume_returns:
-                return (X[1:-1,:] / X[:-2,:] - 1).copy()
+                return (X[1:-2,:] / X[:-3,:] - 1).copy()
             else:
                 return X[:-1,:].copy()
 
@@ -164,11 +124,13 @@ class ChalvatzisPredictor(Predictor):
         X_val_in = X_val.copy() if X_val is not None else X_in
         Y_val_in = Y_val.copy() if Y_val is not None else Y_in
 
+        s = X.shape[0]
         if self.consume_returns:
-            splits = [X.shape[0] - 1]
-        else:
-            splits = [X.shape[0]]
+            s +=1
+        if self.predict_returns:
+            s +=1
             
+        splits = [s]
         if X_val is not None and Y_val is not None:
             splits.append(X.shape[0] + X_val.shape[0])
             X = np.concatenate([X, X_val], axis=0)
@@ -296,7 +258,7 @@ class ChalvatzisPredictor(Predictor):
                 output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
         else:
-            X = self.prepare_features(X[-self.window_size - 1:, :], predict=True)
+            X = self.prepare_features(X[-self.window_size - 2:, :], predict=True)
             x = X[-self.window_size:, :]
             if self.normalize:
                 x = self.__normalize_apply_features(x)
@@ -307,6 +269,9 @@ class ChalvatzisPredictor(Predictor):
             return output, np.abs(output)
 
     def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
+        if (self.update_rolling_window == 0) or (self.update_iter_per_item == 0):
+            return
+
         x = self.prepare_features(X)
         y = self.prepare_prices(Y)
         x = x[-self.window_size + 1 - self.update_rolling_window:, :]
@@ -391,10 +356,5 @@ class ChalvatzisPredictor(Predictor):
         
         print('Calculating validation within training... Progress: %.1f %% - Completed!' % (100 * (i + 1) / val_num))
 
-        if self.predict_returns:
-            training_pred = Y_train[-prediction.shape[0]:,:] * (prediction + 1)
-        else:
-            training_pred = prediction
-
         journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, instruments, name=num, last_epoch=last_epoch, 
-            training_predictions=pd.DataFrame(data=training_pred, index=timestamps[self.window_size-1:train_num]))
+            training_predictions=None)
