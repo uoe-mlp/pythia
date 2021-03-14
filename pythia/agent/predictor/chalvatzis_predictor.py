@@ -16,7 +16,8 @@ class ChalvatzisPredictor(Predictor):
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
                  epochs: int, iter_per_item: int, shuffle: bool, predict_returns: bool, first_column_cash: bool,
                  initial_learning_rate: float, learning_rate_decay: float, batch_size: int, update_iter_per_item: int, masked: bool,
-                 loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None, l2: float=0.0):
+                 loss: str='mse', normalize: bool=False, normalize_min: Optional[float]=None, normalize_max: Optional[float]=None, l2: float=0.0,
+                 update_rolling_window: int=1):
         super(ChalvatzisPredictor, self).__init__(input_size, output_size, predict_returns, first_column_cash)
         
         self.window_size: int = window_size
@@ -30,6 +31,7 @@ class ChalvatzisPredictor(Predictor):
         self.update_iter_per_item: int = update_iter_per_item
         self.normalize: bool = normalize
         self.masked: bool = masked
+        self.update_rolling_window: int = update_rolling_window
         if self.normalize:
             self.normalize_min: float = normalize_min if normalize_min is not None else -1
             self.normalize_max: float = normalize_max if normalize_max is not None else 1
@@ -61,6 +63,7 @@ class ChalvatzisPredictor(Predictor):
         initial_learning_rate: float = ArgsParser.get_or_default(params, 'initial_learning_rate', 0.001)
         batch_size: int = ArgsParser.get_or_default(params, 'batch_size', 1)
         update_iter_per_item: int = ArgsParser.get_or_default(params, 'update_iter_per_item', iter_per_item)
+        update_rolling_window: int = ArgsParser.get_or_default(params, 'update_rolling_window', 1)
         l2: float = ArgsParser.get_or_default(params, 'l2', 0.0)
         normalize_dict: Dict[str, Any] = ArgsParser.get_or_default(params, 'normalize', {})
         masked: bool = ArgsParser.get_or_default(params, 'masked', False)
@@ -86,7 +89,7 @@ class ChalvatzisPredictor(Predictor):
         return ChalvatzisPredictor(input_size=input_size, output_size=output_size, window_size=window_size, hidden_size=hidden_size, 
             epochs=epochs, predict_returns=predict_returns, first_column_cash=first_column_cash, shuffle=shuffle, iter_per_item=iter_per_item, dropout=dropout, all_hidden=all_hidden, learning_rate_decay=learning_rate_decay,
             batch_size=batch_size, initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
-            update_iter_per_item=update_iter_per_item, l2=l2, masked=masked)
+            update_iter_per_item=update_iter_per_item, l2=l2, masked=masked, update_rolling_window=update_rolling_window)
 
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         """
@@ -236,18 +239,20 @@ class ChalvatzisPredictor(Predictor):
             return output, np.abs(output)
 
     def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
-        x = X[-self.window_size:, :]
-        y = Y[-self.window_size:, :]
+        x = X[-self.window_size + 1 - self.update_rolling_window:, :]
+        y = Y[-self.window_size + 1 - self.update_rolling_window:, :]
+
         if self.normalize:
             x = self.__normalize_apply_features(x)
             y = self.__normalize_apply_targets(y)
-        data = self.__create_sequences(x, y, [self.window_size])
+
+        data = self.__create_sequences(x, y, [x.shape[0]])
         x, y = data[0]
         
         X_train = np.array([x,] * self.update_iter_per_item).transpose([1,0,2,3]).reshape([x.shape[0] * self.update_iter_per_item] + list(x.shape[1:]))
         Y_train = np.array([y,] * self.update_iter_per_item).transpose([1,0,2,3]).reshape([y.shape[0] * self.update_iter_per_item] + list(y.shape[1:]))
 
-        self.model.fit(X_train, Y_train, batch_size=1, verbose=0)
+        self.model.fit(X_train, Y_train, batch_size=self.batch_size, verbose=0)
 
     def detach_model(self) -> Any:
         m = self.model.detach_model()
