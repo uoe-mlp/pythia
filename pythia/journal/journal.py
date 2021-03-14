@@ -25,12 +25,12 @@ class Journal(object):
         self.analytics: Optional[Analytics] = None
         self.started_at: datetime = datetime.now()
         self.timestamp: str = self.started_at.strftime('%Y%m%d_%H%M%S')
-        self.predictions: Dict[Timestamp, np.ndarray] = {}
+        self.price_predictions: Dict[Timestamp, np.ndarray] = {}
 
     def store_order(self, orders: List[TradeOrder], price_prediction: Optional[np.ndarray]=None, price_prediction_timestamp: Optional[Timestamp]=None):
         self.open_orders += orders
         if price_prediction is not None:
-            self.predictions[price_prediction_timestamp] = price_prediction
+            self.price_predictions[price_prediction_timestamp] = price_prediction
 
     def store_fill(self, fills: List[TradeFill]):
         for fill in fills:
@@ -42,7 +42,7 @@ class Journal(object):
                 raise ValueError('One and only one open order should match the id for this fill.')
 
     def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, training_predictions: Optional[pd.DataFrame]=None, **kwargs):
-        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.predictions, instruments, training_predictions=training_predictions)
+        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.price_predictions, instruments, training_predictions=training_predictions)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
             'direction': x.direction,
@@ -119,7 +119,7 @@ class Journal(object):
         self.open_orders = []
         self.trades = []
         self.analytics = None
-        self.predictions = {}
+        self.price_predictions = {}
 
     def export_settings(self, settings: Dict):
         s = copy.deepcopy(settings)

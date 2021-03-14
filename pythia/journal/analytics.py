@@ -11,7 +11,7 @@ from .trade_fill import TradeFill
 class Analytics(object):
 
     def __init__(self, timeseries: pd.Series, volatility: float, cumulative_return: float, sharpe_ratio: float, sortino_ratio: float, maximum_drawdown: float,
-        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray], predictions: pd.DataFrame, training_predictions: Optional[pd.DataFrame]):
+        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray], price_predictions: pd.DataFrame, training_predictions: Optional[pd.DataFrame]):
         self.timeseries: pd.Series = timeseries
         self.volatility: float = volatility
         self.cumulative_return: float = cumulative_return
@@ -20,11 +20,11 @@ class Analytics(object):
         self.maximum_drawdown: float = maximum_drawdown
         self.correlation: Optional[np.ndarray] = correlation
         self.mean_directional_accuracy: Optional[np.ndarray] = mean_directional_accuracy
-        self.predictions: pd.DataFrame = predictions
+        self.price_predictions: pd.DataFrame = price_predictions
         self.training_predictions: Optional[pd.DataFrame] = training_predictions if training_predictions is not None else None
 
     @staticmethod
-    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, predictions: Optional[Dict[Timestamp, np.ndarray]], instruments: List[str], training_predictions: Optional[pd.DataFrame]=None) -> Analytics:
+    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, price_predictions: Optional[Dict[Timestamp, np.ndarray]], instruments: List[str], training_predictions: Optional[pd.DataFrame]=None) -> Analytics:
         holdings_df = pd.DataFrame(prices * 0, index=timestamps).astype('float')
         holdings_df.iloc[0, 0] = 1      # Initially, all in the first asset (cash)
 
@@ -41,8 +41,8 @@ class Analytics(object):
         timeseries = (prices_df * holdings_df).sum(axis=1)
         timeseries /= timeseries[0]               # We subtract the initial trading cost (aka, we assume we start from an ideal scenario) 
 
-        if bool(predictions):
-            p_df = pd.DataFrame(predictions).transpose()
+        if bool(price_predictions):
+            p_df = pd.DataFrame(price_predictions).transpose()
             p_df.iloc[1:, :] = p_df.iloc[:-1, :]
             exp_ret = p_df.values[1:,:] / prices[:-1,:] - 1
             real_ret = prices[1:,:] / prices[:-1,:] - 1
@@ -65,9 +65,9 @@ class Analytics(object):
             sharpe_ratio=Analytics.calculate_sharpe_ratio(timeseries),
             sortino_ratio=Analytics.calculate_sortino_ratio(timeseries),
             maximum_drawdown=Analytics.calculate_maximum_drawdonw(timeseries),
-            correlation=None if not predictions else correlation,
-            mean_directional_accuracy=None if not predictions else mda, 
-            predictions=None if not predictions else p_df,
+            correlation=None if not price_predictions else correlation,
+            mean_directional_accuracy=None if not price_predictions else mda, 
+            price_predictions=None if not price_predictions else p_df,
             training_predictions=training_predictions if training_predictions is not None else None)
 
     @staticmethod
@@ -117,7 +117,7 @@ class Analytics(object):
             name: {
                 'values': series.to_list(), 
                 'dates': [x.strftime('%Y-%m-%d') for x in series.index.tolist()]}
-            for name, series in self.predictions.iteritems()} if self.predictions is not None else None
+            for name, series in self.price_predictions.iteritems()} if self.price_predictions is not None else None
 
         data['training_predictions'] = {
             name: {

@@ -239,8 +239,10 @@ class ChalvatzisPredictor(Predictor):
             return output, np.abs(output)
 
     def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
-        x = X[-self.window_size + 1 - self.update_rolling_window:, :]
-        y = Y[-self.window_size + 1 - self.update_rolling_window:, :]
+        x = X[:-1,:]
+        y = self.prepare_prices(Y)
+        x = x[-self.window_size + 1 - self.update_rolling_window:, :]
+        y = y[-self.window_size + 1 - self.update_rolling_window:, :]
 
         if self.normalize:
             x = self.__normalize_apply_features(x)
