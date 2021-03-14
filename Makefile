@@ -9,3 +9,6 @@ conda-create:
 	
 conda-freeze:
 	--conda list -e > requirements.txt
+
+remove-cache:
+	--find . | grep -E "(__pycache__|\.pyc|\.pyo$$)" | xargs rm -rf
