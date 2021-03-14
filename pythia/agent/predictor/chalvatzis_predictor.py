@@ -134,11 +134,23 @@ class ChalvatzisPredictor(Predictor):
             batch_size=batch_size, initial_learning_rate=initial_learning_rate, normalize=normalize, normalize_min=normalize_min, normalize_max=normalize_max,
             update_iter_per_item=update_iter_per_item, l2=l2, masked=masked, update_rolling_window=update_rolling_window, consume_returns=consume_returns)
 
-    def prepare_features(self, X: np.ndarray) -> np.ndarray:
+    def prepare_prices(self, Y: np.ndarray) -> np.ndarray:
+        partial = super().prepare_prices(Y)
         if self.consume_returns:
-            return (X[:-1,:] / X[1:,:] - 1).copy()
+            return partial[1:,:].copy()
+        return partial
+
+    def prepare_features(self, X: np.ndarray, predict=False) -> np.ndarray:
+        if predict:
+            if self.consume_returns:
+                return (X[1:,:] / X[:-1,:] - 1).copy()
+            else:
+                return X.copy()
         else:
-            return X[:-1,:].copy()
+            if self.consume_returns:
+                return (X[1:-1,:] / X[:-2,:] - 1).copy()
+            else:
+                return X[:-1,:].copy()
 
     def _inner_fit(self, X: np.ndarray, Y: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         """
@@ -152,7 +164,11 @@ class ChalvatzisPredictor(Predictor):
         X_val_in = X_val.copy() if X_val is not None else X_in
         Y_val_in = Y_val.copy() if Y_val is not None else Y_in
 
-        splits = [X.shape[0]]
+        if self.consume_returns:
+            splits = [X.shape[0] - 1]
+        else:
+            splits = [X.shape[0]]
+            
         if X_val is not None and Y_val is not None:
             splits.append(X.shape[0] + X_val.shape[0])
             X = np.concatenate([X, X_val], axis=0)
@@ -269,7 +285,7 @@ class ChalvatzisPredictor(Predictor):
             Tuple[np.ndarray, np.ndarray]: prediction and conviction
         """
         if all_history:
-            X = self.prepare_features(X)
+            X = self.prepare_features(X, predict=True)
             if self.normalize:
                 X = self.__normalize_apply_features(X)
             data = self.__create_sequences(X, X, [X.shape[0]])
@@ -280,10 +296,11 @@ class ChalvatzisPredictor(Predictor):
                 output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
         else:
-            X = self.prepare_features(X[-self.window_size - 1:, :])
+            X = self.prepare_features(X[-self.window_size - 1:, :], predict=True)
             x = X[-self.window_size:, :]
             if self.normalize:
                 x = self.__normalize_apply_features(x)
+                
             output = self.model.predict(np.array([x]))[0,-1,:]
             if self.normalize:
                 output = self.__normalize_apply_targets(output, revert=True)
