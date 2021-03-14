@@ -44,12 +44,13 @@ class Analytics(object):
         if bool(price_predictions):
             p_df = pd.DataFrame(price_predictions).transpose()
             p_df.iloc[1:, :] = p_df.iloc[:-1, :]
-            exp_ret = p_df.values[1:,:] / prices[:-1,:] - 1
+            exp_ret = p_df.values[:-1,:] / prices[:-1,:] - 1
             real_ret = prices[1:,:] / prices[:-1,:] - 1
 
             missing = np.any(np.isnan(real_ret) | np.isnan(exp_ret), axis=1)
             exp_ret = exp_ret[~missing, :]
             real_ret = real_ret[~missing, :]
+            
             mda = np.nanmean((exp_ret >= 0) == (real_ret >= 0), axis=0)
             correlation = [None if np.ma.is_masked(np.ma.corrcoef(x, y)[1,0]) else np.ma.corrcoef(x, y)[1,0] for x, y in zip(exp_ret.T, real_ret.T)]
             p_df.columns = instruments
