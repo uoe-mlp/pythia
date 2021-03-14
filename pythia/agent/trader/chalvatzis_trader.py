@@ -105,10 +105,11 @@ class ChalvatzisTrader(Trader):
                     if first_negative > 0:
                         # Magic of compounding
                         ret = np.prod(1 + real_ret[:first_negative]) - 1
-                    # Find return bucket
-                    first_out = (exp_ret[0] >= self.bins[:, asset_i]).argmin(axis=0)
-                    # Add cumulative return to return bucket
-                    self.cumulative_returns[(first_out-1, asset_i)].append(ret)
+                        
+                        # Find return bucket
+                        first_out = (exp_ret[0] >= self.bins[:, asset_i]).argmin(axis=0)
+                        # Add cumulative return to return bucket
+                        self.cumulative_returns[(first_out-1, asset_i)].append(ret)
 
         self.average_cumulative_returns: Dict[Tuple[int, int], float] = {
             key: np.mean(value) if len(value) > 0 else 0.0 for key, value in self.cumulative_returns.items()
