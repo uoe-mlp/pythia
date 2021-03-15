@@ -41,8 +41,8 @@ class Journal(object):
             else:
                 raise ValueError('One and only one open order should match the id for this fill.')
 
-    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, training_predictions: Optional[pd.DataFrame]=None, **kwargs):
-        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.price_predictions, instruments, training_predictions=training_predictions)
+    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, train_actual: np.ndarray, train_predict: np.ndarray, instruments: List[str], name: Optional[str]=None, training_predictions: Optional[pd.DataFrame]=None, **kwargs):
+        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, train_actual, train_predict, self.price_predictions, instruments, training_predictions=training_predictions)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
             'direction': x.direction,

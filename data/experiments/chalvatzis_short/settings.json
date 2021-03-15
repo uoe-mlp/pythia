@@ -6,7 +6,7 @@
             "train": 0.666,
             "val": 0.200,
             "test": 0.134,
-            "epochs_between_validation": 100
+            "epochs_between_validation": 10
         }
     },
     "market": {
@@ -40,7 +40,7 @@
                     "l2": 0.01,
                     "dropout": 0.5,
                     "update_rolling_window": 100, 
-                    "batch_size": 100,
+                    "batch_size": 500,
                     "hidden_size": [128, 128, 128],
                     "normalize": {
                         "active": true,

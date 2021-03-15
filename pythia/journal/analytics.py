@@ -11,7 +11,8 @@ from .trade_fill import TradeFill
 class Analytics(object):
 
     def __init__(self, timeseries: pd.Series, volatility: float, cumulative_return: float, sharpe_ratio: float, sortino_ratio: float, maximum_drawdown: float,
-        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray], price_predictions: pd.DataFrame, training_predictions: Optional[pd.DataFrame]):
+        correlation: Optional[np.ndarray], mean_directional_accuracy: Optional[np.ndarray], price_predictions: pd.DataFrame, training_predictions: Optional[pd.DataFrame],
+        correlation_train: Optional[np.ndarray], mean_directional_accuracy_train: Optional[np.ndarray]):
         self.timeseries: pd.Series = timeseries
         self.volatility: float = volatility
         self.cumulative_return: float = cumulative_return
@@ -22,9 +23,11 @@ class Analytics(object):
         self.mean_directional_accuracy: Optional[np.ndarray] = mean_directional_accuracy
         self.price_predictions: pd.DataFrame = price_predictions
         self.training_predictions: Optional[pd.DataFrame] = training_predictions if training_predictions is not None else None
+        self.correlation_train: Optional[np.ndarray] = correlation_train
+        self.mean_directional_accuracy_train: Optional[np.ndarray] = mean_directional_accuracy_train
 
     @staticmethod
-    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, price_predictions: Optional[Dict[Timestamp, np.ndarray]], instruments: List[str], training_predictions: Optional[pd.DataFrame]=None) -> Analytics:
+    def initialise(timestamps: List[pd.Timestamp], fills: List[TradeFill], prices: np.ndarray, train_actual: np.ndarray, train_predict: np.ndarray, price_predictions: Optional[Dict[Timestamp, np.ndarray]], instruments: List[str], training_predictions: Optional[pd.DataFrame]=None) -> Analytics:
         holdings_df = pd.DataFrame(prices * 0, index=timestamps).astype('float')
         holdings_df.iloc[0, 0] = 1      # Initially, all in the first asset (cash)
 
@@ -55,6 +58,16 @@ class Analytics(object):
             correlation = [None if np.ma.is_masked(np.ma.corrcoef(x, y)[1,0]) else np.ma.corrcoef(x, y)[1,0] for x, y in zip(exp_ret.T, real_ret.T)]
             p_df.columns = instruments
             p_df.dropna(inplace=True)
+
+            # Do the same for training
+            exp_ret_train = train_predict[:-1, -1,:] / train_actual[:-1, -1,:] - 1
+            real_ret_train = train_actual[1:, -1, :] / train_actual[:-1, -1, :] - 1
+            exp_ret_train = exp_ret_train.numpy()
+
+            mda_train = np.nanmean((exp_ret_train >= 0) == (real_ret_train >= 0), axis=0)
+            correlation_train = [None if np.ma.is_masked(np.ma.corrcoef(x, y)[1,0]) else np.ma.corrcoef(x, y)[1,0] for x, y in zip(exp_ret_train.T, real_ret_train.T)]
+
+
             
         if training_predictions is not None:
             training_predictions.columns = instruments
@@ -69,7 +82,9 @@ class Analytics(object):
             correlation=None if not price_predictions else correlation,
             mean_directional_accuracy=None if not price_predictions else mda, 
             price_predictions=None if not price_predictions else p_df,
-            training_predictions=training_predictions if training_predictions is not None else None)
+            training_predictions=training_predictions if training_predictions is not None else None,
+            correlation_train=None if not price_predictions else correlation_train,
+            mean_directional_accuracy_train=None if not price_predictions else mda_train)
 
     @staticmethod
     def timeseries2returns(timeseries: pd.Series) -> pd.Series:
@@ -114,6 +129,8 @@ class Analytics(object):
         data['maximum_drawdown'] = self.maximum_drawdown
         data['correlation'] = self.correlation
         data['mean_directional_accuracy'] = self.mean_directional_accuracy.tolist() if self.mean_directional_accuracy is not None else None
+        data['correlation_train'] = self.correlation_train
+        data['mean_directional_accuracy_train'] = self.mean_directional_accuracy_train.tolist() if self.mean_directional_accuracy_train is not None else None
         data['predictions'] = {
             name: {
                 'values': series.to_list(), 

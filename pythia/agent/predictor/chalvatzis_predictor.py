@@ -166,13 +166,20 @@ class ChalvatzisPredictor(Predictor):
                 obs = OutputObserver(self.model, X_train, Y_train * 0, epochs, self.batch_size)
                 self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
 
+                # Training Metrics
+                Y_hat_train = self.model.predict(X_train)
+                if self.normalize:
+                    Y_hat_train = self.__normalize_apply_targets(Y_hat_train, revert=True)
+                
+
+
                 # Predict
                 Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
                 if self.normalize:
                     Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
                 if (loop != loops - 1):
                     last_epoch = loop * epochs_between_validation + epochs
-                    self.validate(loop, val_infra, Y_hat, last_epoch)
+                    self.validate(loop, val_infra, Y_hat, last_epoch, Y_hat_train, Y_train)
         else:
             obs = OutputObserver(self.model, X_train, Y_train * 0, self.epochs, self.batch_size)
             self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
@@ -312,7 +319,7 @@ class ChalvatzisPredictor(Predictor):
     def attach_model(self, model) -> None:
         self.model.attach_model(model)
 
-    def validate(self, num, val_infra, Y_hat, last_epoch) -> None:
+    def validate(self, num, val_infra, Y_hat, last_epoch, Y_hat_train, Y_train_special) -> None:
         print('Calculating validation within training...', end="\r")
         agent = copy.deepcopy(val_infra[0])
         market_execute = val_infra[1]
@@ -335,6 +342,7 @@ class ChalvatzisPredictor(Predictor):
 
         if self.first_column_cash:
             prediction, confidence = self.add_cash(Y_hat, Y_hat)
+            #prediction_train, confidence_train = self.add_cash(Y_hat_train, Y_hat_train)
 
         trader.fit(prediction=prediction, conviction=prediction, Y=Y_train, predict_returns=predictor.predict_returns)
 
@@ -356,5 +364,5 @@ class ChalvatzisPredictor(Predictor):
         
         print('Calculating validation within training... Progress: %.1f %% - Completed!' % (100 * (i + 1) / val_num))
 
-        journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, instruments, name=num, last_epoch=last_epoch, 
+        journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, Y_hat_train, Y_train_special, instruments, name=num, last_epoch=last_epoch, 
             training_predictions=None)
