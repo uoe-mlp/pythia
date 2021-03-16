@@ -41,8 +41,9 @@ class Journal(object):
             else:
                 raise ValueError('One and only one open order should match the id for this fill.')
 
-    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, train_actual: np.ndarray, train_predict: np.ndarray, instruments: List[str], name: Optional[str]=None, training_predictions: Optional[pd.DataFrame]=None, **kwargs):
-        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, train_actual, train_predict, self.price_predictions, instruments, training_predictions=training_predictions)
+    def run_analytics(self, type: str, timestamps: List[Timestamp], prices: np.ndarray, instruments: List[str], name: Optional[str]=None, training_predictions: Optional[pd.DataFrame]=None, 
+    training_mda=None, training_corr=None, **kwargs):
+        self.analytics = Analytics.initialise(timestamps, [x[1] for x in self.trades], prices, self.price_predictions, instruments, training_predictions=training_predictions, training_mda=training_mda, training_corr=training_corr)
         analytics = self.analytics.to_dict()
         analytics['fills'] = sum([[{
             'direction': x.direction,
@@ -80,7 +81,9 @@ class Journal(object):
         all_metrics: List = ["epochs", "cum_return", "max_drawdown",
                             "n_trades", "sharpe", "sortino", "volatility"] + \
                             ["%s_mda" % instr for instr in instruments] + \
-                            ["%s_correlation" % instr for instr in instruments]
+                            ["%s_correlation" % instr for instr in instruments] + \
+                            ["%s_training_mda" % instr for instr in instruments] + \
+                            ["%s_training_correlation" % instr for instr in instruments]
         
         # Since the files are processed out of order keep a dictionary
         ordered_metrics: Dict = {}
@@ -102,9 +105,11 @@ class Journal(object):
                 volatility = ArgsParser.get_or_default(data, 'volatility', None)
                 mean_directional_accuracy = ArgsParser.get_or_default(data, 'mean_directional_accuracy', [None for instr in instruments])
                 correlation = ArgsParser.get_or_default(data, 'correlation', [None for instr in instruments])
+                training_mda = [x[-1] for x in ArgsParser.get_or_default(data, 'training_mda', [[None] for instr in instruments])]
+                training_correlation = [x[-1] for x in ArgsParser.get_or_default(data, 'training_correlation', [[None] for instr in instruments])]
 
                 ordered_metrics[i] = [last_epoch, cumulative_return, maximum_drawdown, number_of_trades,
-                                    sharpe_ratio, sortino_ratio, volatility] + mean_directional_accuracy + correlation
+                                    sharpe_ratio, sortino_ratio, volatility] + mean_directional_accuracy + correlation + training_mda + training_correlation
 
 
             output_csv = os.path.join(train_folder, "output.csv")

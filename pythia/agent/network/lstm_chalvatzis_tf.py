@@ -9,14 +9,19 @@ class OutputObserver(tf.keras.callbacks.Callback):
     callback to observe the output of the network
     """
 
-    def __init__(self, model, X_train, Y_hat, epochs, batch_size):
+    def __init__(self, model, X_train, Y_hat, Y_train, epochs, batch_size, calculate_stats, initial_epoch):
         self.model = model.seq_model
         self.X_train = X_train
+        self.Y_train = Y_train.numpy()
         self.Y_hat: np.ndarray = Y_hat if isinstance(Y_hat, np.ndarray) else Y_hat.numpy()
         self.batch_num = 0
         self.epochs = epochs
+        self.initial_epoch = initial_epoch
         self.active = False
         self.batch_size: int = batch_size
+        self.mda = np.zeros([1, self.Y_hat.shape[-1]])
+        self.corr = np.zeros([1, self.Y_hat.shape[-1]])
+        self.calculate_stats: Callable = calculate_stats
 
     def on_batch_end(self, epoch, logs={}):
         if self.active:
@@ -31,6 +36,11 @@ class OutputObserver(tf.keras.callbacks.Callback):
             self.active = True
         else:
             self.active = False
+
+    def on_train_end(self, logs):
+        tmp_mda, tmp_corr = self.calculate_stats(self.model.predict(self.X_train), self.Y_train)
+        self.mda[0,:] = tmp_mda
+        self.corr[0,:] = tmp_corr
 
 class MaskedDense(tf.keras.layers.Layer):
     def __init__(self, input_shape, output_shape, kernel_regularizer=None,  name=None):

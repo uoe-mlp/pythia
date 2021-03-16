@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Tuple, Dict, List, Any, Optional
+from typing import Dict, Tuple, Dict, List, Any, Optional, Union, Callable
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -11,6 +11,15 @@ from pythia.agent.network import LSTMChalvatzisTF, OutputObserver
 from .predictor import Predictor
 
 
+def custom_loss(y_actual,y_pred,factor):
+    mean_square_loss = tf.reduce_mean(tf.losses.mean_squared_error(y_actual, y_pred))
+    cross_entropy = - factor *  tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.cast(tf.greater_equal(y_actual, 0.0), tf.float32),
+        logits=y_pred))
+        
+    loss = tf.add(mean_square_loss, cross_entropy)
+    return loss
+    
 class ChalvatzisPredictor(Predictor):
 
     def __init__(self, input_size: int, output_size: int, window_size: int, hidden_size: int, dropout: float, all_hidden: bool,
@@ -46,7 +55,10 @@ class ChalvatzisPredictor(Predictor):
             staircase=False)
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
-        self.loss: str = loss
+        if self.predict_returns:
+            self.loss: Union[str, Callable] = lambda y_actual, y_pred: custom_loss(y_actual, y_pred, 0.05)
+        else:   
+            self.loss = loss
         self.model.compile(self.optimizer, self.loss, ['mae'])
 
     @property
@@ -159,35 +171,46 @@ class ChalvatzisPredictor(Predictor):
         if (epochs_between_validation is not None):
             loops = np.ceil(self.epochs / float(epochs_between_validation))
             for loop in range(int(loops)):
-                if loop == loops - 1:
-                    epochs: int = self.epochs - (loop * epochs_between_validation)
-                else:
-                    epochs = int(epochs_between_validation)
-                obs = OutputObserver(self.model, X_train, Y_train * 0, epochs, self.batch_size)
-                self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
+                epochs: int = min(self.epochs, (1 + loop) * epochs_between_validation)
+                obs = OutputObserver(self.model, X_train, Y_hat=Y_train * 0, Y_train=Y_train, epochs=epochs, initial_epoch=loop * epochs_between_validation, batch_size=self.batch_size, calculate_stats=lambda Y_hat, Y_train: self.calculate_stats(Y_hat, Y_train))
+                self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs], initial_epoch=loop * epochs_between_validation)
 
                 # Training Metrics
-                Y_hat_train = self.model.predict(X_train)
-                if self.normalize:
-                    Y_hat_train = self.__normalize_apply_targets(Y_hat_train, revert=True)
+                training_mda = obs.mda
+                training_corr = obs.corr
+                if self.first_column_cash:
+                    training_mda = np.concatenate([np.ones([training_mda.shape[0], 1]), training_mda], axis=1)
+                    training_corr = np.concatenate([np.zeros([training_corr.shape[0], 1]), training_corr], axis=1)
                 
-
-
                 # Predict
                 Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
                 if self.normalize:
                     Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
                 if (loop != loops - 1):
-                    last_epoch = loop * epochs_between_validation + epochs
-                    self.validate(loop, val_infra, Y_hat, last_epoch, Y_hat_train, Y_train)
+                    self.validate(loop, val_infra, Y_hat, epochs, training_mda=training_mda, training_corr=training_corr)
         else:
-            obs = OutputObserver(self.model, X_train, Y_train * 0, self.epochs, self.batch_size)
-            self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs])
+            obs = OutputObserver(self.model, X_train, Y_hat=Y_train * 0, Y_train=Y_train, epochs=self.epochs, initial_epoch=0, batch_size=self.batch_size, calculate_stats=lambda Y_hat, Y_train: self.calculate_stats(Y_hat, Y_train))
+            self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs], initial_epoch=0)
             # Predict
             Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
             if self.normalize:
                 Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
         return Y_hat
+
+    def calculate_stats(self, Y_hat, Y_train) -> Tuple[np.ndarray, np.ndarray]:
+        if self.normalize:
+            Y_hat = self.__normalize_apply_targets(Y_hat, revert=True)
+            Y_train = self.__normalize_apply_targets(Y_train, revert=True)
+        if self.predict_returns:
+            Y_hat = Y_hat[:,-1,:]
+            Y_train = Y_train[:,-1,:]
+        else:
+            Y_hat = Y_hat[1:,-1,:] / Y_train[:-1,-1,:]
+            Y_train = Y_train[1:,-1,:] / Y_train[:-1,-1,:]
+
+        mda = np.array([np.mean((Y_hat[:,asset_i] * Y_train[:,asset_i] >= 0)) for asset_i in range(Y_hat.shape[1])])
+        corr = np.array([np.corrcoef(Y_hat[:,asset_i], Y_train[:,asset_i])[0,1] for asset_i in range(Y_hat.shape[1])])
+        return (mda, corr)
 
     def __normalize_fit(self, X: np.ndarray, Y: np.ndarray) -> None:
         self._normalize_fitted_min_feature: np.ndarray = X.min(axis=0)
@@ -319,7 +342,7 @@ class ChalvatzisPredictor(Predictor):
     def attach_model(self, model) -> None:
         self.model.attach_model(model)
 
-    def validate(self, num, val_infra, Y_hat, last_epoch, Y_hat_train, Y_train_special) -> None:
+    def validate(self, num, val_infra, Y_hat, last_epoch, training_mda, training_corr) -> None:
         print('Calculating validation within training...', end="\r")
         agent = copy.deepcopy(val_infra[0])
         market_execute = val_infra[1]
@@ -342,7 +365,6 @@ class ChalvatzisPredictor(Predictor):
 
         if self.first_column_cash:
             prediction, confidence = self.add_cash(Y_hat, Y_hat)
-            #prediction_train, confidence_train = self.add_cash(Y_hat_train, Y_hat_train)
 
         trader.fit(prediction=prediction, conviction=prediction, Y=Y_train, predict_returns=predictor.predict_returns)
 
@@ -364,5 +386,5 @@ class ChalvatzisPredictor(Predictor):
         
         print('Calculating validation within training... Progress: %.1f %% - Completed!' % (100 * (i + 1) / val_num))
 
-        journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, Y_hat_train, Y_train_special, instruments, name=num, last_epoch=last_epoch, 
-            training_predictions=None)
+        journal.run_analytics('train', timestamps[train_num:train_num + val_num], Y_val, instruments, name=num, last_epoch=last_epoch, 
+            training_predictions=None, training_mda=training_mda, training_corr=training_corr)
