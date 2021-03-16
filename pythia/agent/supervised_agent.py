@@ -10,7 +10,7 @@ from pythia.journal import TradeOrder
 from pythia.journal import TradeFill
 
 from .agent import Agent
-from .predictor import Predictor, LinearPredictor, ChalvatzisPredictor, FlatPredictor
+from .predictor import Predictor, LinearPredictor, ChalvatzisPredictor, FlatPredictor, ChalvatzisPredictorFunc
 from .trader import Trader, NaiveTrader, BuyAndHoldTrader, ChalvatzisTrader
 
 
@@ -29,6 +29,8 @@ class SupervisedAgent(Agent):
             predictor: Predictor = LinearPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
         elif predictor_config['type'].lower() == 'chalvatzis':
             predictor = ChalvatzisPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
+        elif predictor_config['type'].lower() == 'chalvatzis_func':
+            predictor = ChalvatzisPredictorFunc.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
         elif predictor_config['type'].lower() == 'flat':
             predictor = FlatPredictor.initialise(input_size=input_size, output_size=output_size, params=predictor_params)
         else:
