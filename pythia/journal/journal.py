@@ -113,12 +113,11 @@ class Journal(object):
 
 
             output_csv = os.path.join(train_folder, "output.csv")
-            # Write to csv
-            with open(output_csv, 'w+', newline='\n') as csv_file:
-                    writer = csv.writer(csv_file, delimiter=',')
-                    writer.writerow(all_metrics)
-                    for k, v in sorted(ordered_metrics.items()):
-                        writer.writerow(v)
+
+            out = pd.DataFrame(ordered_metrics).transpose()
+            out.columns = all_metrics
+            out.sort_values('epochs', inplace=True)
+            out.to_csv(output_csv, index=False)
 
     def clean(self):        
         self.open_orders = []
