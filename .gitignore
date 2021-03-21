@@ -13,3 +13,7 @@ tutorials/alessandro/data/train.ft.txt.bz2
 data/experiments/**/results__*
 data/experiments/**/*.json
 *.zip
+tutorials/neil/**/*.csv
+tutorials/neil/**/*.html
+tutorials/neil/**/*.pkl
+tutorials/neil/**/*.mdl
