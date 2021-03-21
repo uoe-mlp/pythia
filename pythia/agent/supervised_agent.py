@@ -16,12 +16,16 @@ from .trader import Trader, NaiveTrader, BuyAndHoldTrader, ChalvatzisTrader
 
 class SupervisedAgent(Agent):
 
-    def __init__(self, predictor: Predictor, trader: Trader):
+    def __init__(self, predictor: Predictor, trader: Trader, retrain_every: Optional[int]=None):
         self.predictor: Predictor = predictor
         self.trader: Trader = trader
+        self.retrain_every: Optional[int] = retrain_every
+        if self.retrain_every is not None:
+            self.retrain_counter: int = 0
 
     @staticmethod
     def initialise(input_size: int, output_size: int, params: Dict) -> SupervisedAgent:
+        retrain_every: Optional[int] = ArgsParser.get_or_default(params, 'retrain_every', None)
         # ---- PREDICTOR ----
         predictor_config = ArgsParser.get_or_default(params, 'predictor', {'type': 'flat'})
         predictor_params = ArgsParser.get_or_default(predictor_config, 'params', {})
@@ -47,9 +51,10 @@ class SupervisedAgent(Agent):
         else:
             raise ValueError('Trader type "%s" not recognized'  % (trader_config['type']))
 
-        return SupervisedAgent(predictor, trader)
+        return SupervisedAgent(predictor, trader, retrain_every=retrain_every)
 
-    def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: np.ndarray, Y_val: np.ndarray, simulator: Callable[[List[TradeOrder], Timestamp], List[TradeFill]], epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
+    def fit(self, X_train: np.ndarray, Y_train: np.ndarray, X_val: Optional[np.ndarray]=None, Y_val: Optional[np.ndarray]=None, 
+            simulator: Optional[Callable[[List[TradeOrder], Timestamp], List[TradeFill]]]=None, epochs_between_validation: Optional[int]=None, val_infra: Optional[List]=None, **kwargs):
         prediction = self.predictor.fit(X_train, Y_train, X_val, Y_val, epochs_between_validation=epochs_between_validation, val_infra=None if val_infra is None else val_infra + [copy.deepcopy(self.trader)], **kwargs)
         self.trader.fit(prediction=prediction, conviction=prediction, Y=Y_train, predict_returns=self.predictor.predict_returns)
 
@@ -63,7 +68,17 @@ class SupervisedAgent(Agent):
 
     def update(self, fills: List[TradeFill], X: np.ndarray, Y: np.ndarray):
         self.trader.update_portfolio(fills)
-        self.predictor.update(X, Y)
+        
+        if self.retrain_every is not None:
+            if self.retrain_counter == self.retrain_every:
+                self.fit(X, Y, verbose=0)
+                self.retrain_counter = 0
+            else:
+                self.retrain_counter += 1
+                self.predictor.update(X, Y)
+        else:
+            self.predictor.update(X, Y)
+                
         prediction, conviction = self.predictor.predict(X)
         self.trader.update_policy(X, Y, prediction, conviction, predict_returns=self.predictor.predict_returns)
 

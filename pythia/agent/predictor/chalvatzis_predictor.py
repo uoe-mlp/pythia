@@ -13,9 +13,10 @@ from .predictor import Predictor
 
 def custom_loss(y_actual,y_pred,factor):
     mean_square_loss = tf.reduce_mean(tf.losses.mean_squared_error(y_actual, y_pred))
-    cross_entropy = - factor *  tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        labels=tf.cast(tf.greater_equal(y_actual, 0.0), tf.float32),
-        logits=y_pred))
+    bce = tf.losses.BinaryCrossentropy()
+    cross_entropy = factor *  tf.reduce_mean(bce(
+        tf.cast(tf.greater_equal(y_actual, 0.0), tf.float32),
+        tf.sigmoid(y_pred)))
         
     loss = tf.add(mean_square_loss, cross_entropy)
     return loss
@@ -42,23 +43,33 @@ class ChalvatzisPredictor(Predictor):
         self.masked: bool = masked
         self.update_rolling_window: int = update_rolling_window
         self.consume_returns: bool = consume_returns
+        self.l2: float = l2
+        self.loss_name: str = loss
+        self.learning_rate_decay: float = learning_rate_decay
+        self.initial_learning_rate: float = initial_learning_rate
+
         if self.normalize:
             self.normalize_min: float = normalize_min if normalize_min is not None else -1
             self.normalize_max: float = normalize_max if normalize_max is not None else 1
-        self.model = LSTMChalvatzisTF(
-            input_size=input_size, window_size=window_size, hidden_size=hidden_size, output_size=self.output_size,
-            dropout=dropout, l2=l2, masked=masked)
-        self.lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-            initial_learning_rate=initial_learning_rate,
-            decay_steps=1,
-            decay_rate=learning_rate_decay,
-            staircase=False)
 
+        self._initialise_model()
+ 
+    def _initialise_model(self):
+        self.model = LSTMChalvatzisTF(
+            input_size=self.input_size, window_size=self.window_size, hidden_size=self.hidden_size, output_size=self.output_size,
+            dropout=self.dropout, l2=self.l2, masked=self.masked)
+        self.lr_schedule: tf.keras.optimizers.Schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+            initial_learning_rate=self.initial_learning_rate,
+            decay_steps=1,
+            decay_rate=self.learning_rate_decay,
+            staircase=False)
+        
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
         if self.predict_returns:
-            self.loss: Union[str, Callable] = lambda y_actual, y_pred: custom_loss(y_actual, y_pred, 0.05)
+            self.loss: Union[str, Callable] = lambda y_actual, y_pred: custom_loss(y_actual, y_pred, 0.01)
+            self.loss_name = 'combined'
         else:   
-            self.loss = loss
+            self.loss = self.loss_name
         self.model.compile(self.optimizer, self.loss, ['mae'])
 
     @property
@@ -168,12 +179,14 @@ class ChalvatzisPredictor(Predictor):
         X_train = tf.convert_to_tensor(X_train, dtype=tf.dtypes.float32)
         Y_train = tf.convert_to_tensor(Y_train, dtype=tf.dtypes.float32)
         
+        verbose: int = ArgsParser.get_or_default(kwargs, 'verbose', 1)
+
         if (epochs_between_validation is not None):
             loops = np.ceil(self.epochs / float(epochs_between_validation))
             for loop in range(int(loops)):
                 epochs: int = min(self.epochs, (1 + loop) * epochs_between_validation)
                 obs = OutputObserver(self.model, X_train, Y_hat=Y_train * 0, Y_train=Y_train, epochs=epochs, initial_epoch=loop * epochs_between_validation, batch_size=self.batch_size, calculate_stats=lambda Y_hat, Y_train: self.calculate_stats(Y_hat, Y_train))
-                self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs], initial_epoch=loop * epochs_between_validation)
+                self.model.fit(X_train, Y_train, epochs=epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs], initial_epoch=loop * epochs_between_validation, verbose=verbose)
 
                 # Training Metrics
                 training_mda = obs.mda
@@ -190,7 +203,7 @@ class ChalvatzisPredictor(Predictor):
                     self.validate(loop, val_infra, Y_hat, epochs, training_mda=training_mda, training_corr=training_corr)
         else:
             obs = OutputObserver(self.model, X_train, Y_hat=Y_train * 0, Y_train=Y_train, epochs=self.epochs, initial_epoch=0, batch_size=self.batch_size, calculate_stats=lambda Y_hat, Y_train: self.calculate_stats(Y_hat, Y_train))
-            self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs], initial_epoch=0)
+            self.model.fit(X_train, Y_train, epochs=self.epochs, batch_size=self.batch_size, validation_data=(X_val, Y_val), callbacks=[obs], initial_epoch=0, verbose=verbose)
             # Predict
             Y_hat = obs.Y_hat[::self.iter_per_item, -1, :]
             if self.normalize:
@@ -298,7 +311,7 @@ class ChalvatzisPredictor(Predictor):
                 output = self.__normalize_apply_targets(output, revert=True)
             return output, np.abs(output)
 
-    def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:
+    def _inner_update(self, X: np.ndarray, Y: np.ndarray) -> None:        
         if (self.update_rolling_window == 0) or (self.update_iter_per_item == 0):
             return
 
