@@ -12,3 +12,4 @@ tutorials/alessandro/data/train.ft.txt.bz2
 .tmp
 data/experiments/**/results__*
 data/experiments/**/*.json
+*.zip
