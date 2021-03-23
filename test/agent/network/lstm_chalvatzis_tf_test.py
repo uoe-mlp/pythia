@@ -43,7 +43,7 @@ def test_lstm_chalvatzis_tf_smoke():
     net = LSTMChalvatzisTF(input_size=1, window_size=window_size, hidden_size=[16, 16], output_size=1, dropout=[0,0], masked=False)
     net.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
-    net.fit(X_train, Y_train, epochs=5, validation_data=(X_val, Y_val), callbacks=[OutputObserver(net, X_train, Y_hat=Y_train * 0, Y_train=Y_train, epochs=5, batch_size=1, inital_epoch=0)])
+    net.fit(X_train, Y_train, epochs=5, validation_data=(X_val, Y_val), callbacks=[OutputObserver(net, X_train, Y_hat=Y_train * 0, Y_train=Y_train, epochs=5, batch_size=1, calculate_stats=None, initial_epoch=0)])
 
     net.summary()
 

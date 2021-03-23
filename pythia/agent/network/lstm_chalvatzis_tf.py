@@ -12,7 +12,7 @@ class OutputObserver(tf.keras.callbacks.Callback):
     def __init__(self, model, X_train, Y_hat, Y_train, epochs, batch_size, calculate_stats, initial_epoch):
         self.model = model.seq_model
         self.X_train = X_train
-        self.Y_train = Y_train.numpy()
+        self.Y_train: np.ndarray = Y_train if isinstance(Y_train, np.ndarray) else Y_train.numpy()
         self.Y_hat: np.ndarray = Y_hat if isinstance(Y_hat, np.ndarray) else Y_hat.numpy()
         self.batch_num = 0
         self.epochs = epochs
@@ -21,7 +21,7 @@ class OutputObserver(tf.keras.callbacks.Callback):
         self.batch_size: int = batch_size
         self.mda = np.zeros([1, self.Y_hat.shape[-1]])
         self.corr = np.zeros([1, self.Y_hat.shape[-1]])
-        self.calculate_stats: Callable = calculate_stats
+        self.calculate_stats: Callable = calculate_stats if calculate_stats is not None else lambda x, y: (np.zeros([1, self.Y_hat.shape[-1]]), np.zeros([1, self.Y_hat.shape[-1]]))
 
     def on_batch_end(self, epoch, logs={}):
         if self.active:
